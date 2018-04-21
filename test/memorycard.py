@@ -229,3 +229,15 @@ def test_remove(capsys, mc01_copy):
     assert output.err == ""
 
     assert md5(mc_file) == "5d0ffec85ad1dc9a371e0ead55f4932b"
+
+
+def test_remove_nonempty(capsys, mc01_copy):
+    mc_file = mc01_copy.join("mc01.ps2").strpath
+
+    mymc.main(["mymc",
+               "-i", mc_file,
+               "remove", "BESCES-50501REZ"])
+
+    output = capsys.readouterr()
+    assert output.out == ""
+    assert output.err == "BESCES-50501REZ: directory not empty\n"
