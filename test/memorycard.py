@@ -107,3 +107,59 @@ def test_check_root_directory(capsys, mc01_copy):
     output = capsys.readouterr()
     assert output.err == mc_file + ": Root directory damaged.\n"
     assert output.out == ""
+
+# TODO: Should probably make more tests for check
+
+
+def test_clear(capsys, mc01_copy):
+    mc_file = mc01_copy.join("mc01.ps2").strpath
+
+    mymc.main(["mymc",
+               "-i", mc_file,
+               "clear", "-x", "BESCES-50501REZ"])
+
+    output = capsys.readouterr()
+    assert output.err == ""
+    assert output.out == ""
+
+    assert md5(mc_file) == "defaeba9b480676e8666dd4f3ff16643"
+
+
+def test_set(capsys, mc01_copy):
+    mc_file = mc01_copy.join("mc01.ps2").strpath
+
+    mymc.main(["mymc",
+               "-i", mc_file,
+               "set", "-K", "BESCES-50501REZ"])
+
+    output = capsys.readouterr()
+    assert output.err == ""
+    assert output.out == ""
+
+    assert md5(mc_file) == "d235a085e75a8201bd417b127ccd8908"
+
+
+def test_delete(capsys, mc01_copy):
+    mc_file = mc01_copy.join("mc01.ps2").strpath
+
+    mymc.main(["mymc",
+               "-i", mc_file,
+               "delete", "BESCES-50501REZ"])
+
+    output = capsys.readouterr()
+    assert output.err == ""
+    assert output.out == ""
+
+    assert md5(mc_file) == "143e640ccf3f22e48e1d1d4b10300d57"
+
+
+def test_df(capsys, data):
+    mc_file = data.join("mc01.ps2").strpath
+
+    mymc.main(["mymc",
+               "-i", mc_file,
+               "df"])
+
+    output = capsys.readouterr()
+    assert output.out == mc_file + ": 8268800 bytes free.\n"
+    assert output.err == ""
