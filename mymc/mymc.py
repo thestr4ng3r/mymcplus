@@ -361,7 +361,10 @@ def do_dir(cmd, mc, opts, args, opterr):
 			dirname = "/" + ent[8]
 			mc.chdir(dirname)
 			length = mc.dir_size(".");
-			enc = getattr(sys.stdout, "encoding", None)
+			if opts.ascii:
+				enc = "ascii"
+			else:
+				enc = getattr(sys.stdout, "encoding", None)
 			if dirmode & DF_PSX:
 				title = _get_psx_title(mc, ent[8], enc)
 			else:
@@ -617,7 +620,8 @@ cmd_table = {
 	"dir": (do_dir, "rb",
 		None,
 		"Display save file information.",
-		[]),
+		[opt("-a", "--ascii", action="store_true",
+			 help = "Output names in ASCII")]),
 	"df": (do_df, "rb",
 	       None,
 	       "Display the amount free space.",

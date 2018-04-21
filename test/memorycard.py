@@ -163,3 +163,21 @@ def test_df(capsys, data):
     output = capsys.readouterr()
     assert output.out == mc_file + ": 8268800 bytes free.\n"
     assert output.err == ""
+
+
+def test_dir(monkeypatch, capsys, data):
+    mc_file = data.join("mc01.ps2").strpath
+
+    mymc.main(["mymc",
+               "-i", mc_file,
+               "dir", "-a"])
+
+    output = capsys.readouterr()
+    assert output.out == ("BEDATA-SYSTEM                    Your System\n"
+                          "   5KB Not Protected             Configuration\n"
+                          "\n"
+                          "BESCES-50501REZ                  Rez\n"
+                          "  53KB Not Protected             \n"
+                          "\n"
+                          "8,075 KB Free\n")
+    assert output.err == ""
