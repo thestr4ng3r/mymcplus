@@ -700,8 +700,8 @@ class my_help_formatter(optparse.IndentedHelpFormatter):
 			lines.append(line)
 		return "\n".join(lines) + "\n"
 
-def main():
-	prog = sys.argv[0].decode(sys.getdefaultencoding(), "replace")
+def main(argv):
+	prog = argv[0].decode(sys.getdefaultencoding(), "replace")
 	usage = "usage: %prog [-ih] memcard.ps2 command [...]"
 	description = ("Manipulate PS2 memory card images.\n\n"
 		       "Supported commands: ")
@@ -723,7 +723,7 @@ def main():
 			     help = "Ignore ECC errors while reading.")
 			     
 	optparser.disable_interspersed_args()
-	(opts, args) = optparser.parse_args()
+	(opts, args) = optparser.parse_args(args=argv[1:])
 
 	if len(args) == 0:
 		try:
@@ -808,5 +808,6 @@ def main():
 
 	return ret
 
-sys.exit(main())
+if __name__ == "__main__":
+	sys.exit(main(sys.argv))
 
