@@ -1,21 +1,37 @@
 
 import mymc
 
+
 def md5(fn):
     import hashlib
     return hashlib.md5(open(fn, "rb").read()).hexdigest()
 
-def test_ls(capsys, data):
+
+def patch_fixed_time(monkeypatch, mod):
+    def tod_now():
+        return 42, 37, 22, 20, 4, 2018
+    monkeypatch.setattr(mod, "tod_now", tod_now)
+
+
+def patch_localtime(monkeypatch):
+    import time
+    def localtime(secs=None):
+        return time.gmtime(secs)
+    monkeypatch.setattr(time, "localtime", localtime)
+
+
+def test_ls(monkeypatch, capsys, data):
+    patch_localtime(monkeypatch)
     mymc.main(["mymc",
                "-i", data.join("mc01.ps2").strpath,
                "ls"])
 
     output = capsys.readouterr()
     assert output.err == ""
-    assert output.out == ("rwx--d----+----       4 2018-04-21 16:53:07 .\n"
-                          "-wx--d----+--H-       0 2018-04-21 16:53:00 ..\n"
-                          "rwx--d-------H-       4 2018-04-21 16:53:01 BEDATA-SYSTEM\n"
-                          "rwx--d----+----       5 2018-04-21 16:53:09 BESCES-50501REZ\n")
+    assert output.out == ("rwx--d----+----       4 2018-04-21 14:53:07 .\n"
+                          "-wx--d----+--H-       0 2018-04-21 14:53:00 ..\n"
+                          "rwx--d-------H-       4 2018-04-21 14:53:01 BEDATA-SYSTEM\n"
+                          "rwx--d----+----       5 2018-04-21 14:53:09 BESCES-50501REZ\n")
 
 
 def test_extract(capsys, data, tmpdir):
@@ -31,3 +47,36 @@ def test_extract(capsys, data, tmpdir):
 
     assert md5(out_file) == "5388344a2d4bb429b9a18ff683a8a691"
 
+
+def test_add(monkeypatch, capsys, data, tmpdir):
+    import ps2mc
+    patch_fixed_time(monkeypatch, ps2mc)
+    patch_localtime(monkeypatch)
+
+    file = tmpdir.join("helloworld.txt").strpath
+    with open(file, "w") as f:
+         f.write("Hello World!\n")
+
+    mc_file = data.join("mc01.ps2").strpath
+
+    mymc.main(["mymc",
+               "-i", mc_file,
+               "add", file])
+
+    output = capsys.readouterr()
+    assert output.out == ""
+    assert output.err == ""
+
+    mymc.main(["mymc",
+               "-i", mc_file,
+               "ls"])
+
+    output = capsys.readouterr()
+    assert output.out == ("rwx--d----+----       5 2018-04-20 13:37:42 .\n"
+                          "-wx--d----+--H-       0 2018-04-21 14:53:00 ..\n"
+                          "rwx--d-------H-       4 2018-04-21 14:53:01 BEDATA-SYSTEM\n"
+                          "rwx--d----+----       5 2018-04-21 14:53:09 BESCES-50501REZ\n"
+                          "rwx-f-----+----      13 2018-04-20 13:37:42 helloworld.txt\n")
+    assert output.err == ""
+
+    assert md5(mc_file) == "faa75353a97328c7d8fe38756c38fdd9"
