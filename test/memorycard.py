@@ -165,7 +165,7 @@ def test_df(capsys, data):
     assert output.err == ""
 
 
-def test_dir(monkeypatch, capsys, data):
+def test_dir(capsys, data):
     mc_file = data.join("mc01.ps2").strpath
 
     mymc.main(["mymc",
@@ -181,3 +181,51 @@ def test_dir(monkeypatch, capsys, data):
                           "\n"
                           "8,075 KB Free\n")
     assert output.err == ""
+
+
+def test_format(monkeypatch, capsys, tmpdir):
+    import ps2mc
+    patch_fixed_time(monkeypatch, ps2mc)
+
+    mc_file = tmpdir.join("mc.ps2").strpath
+
+    mymc.main(["mymc",
+               "-i", mc_file,
+               "format"])
+
+    output = capsys.readouterr()
+    assert output.out == ""
+    assert output.err == ""
+
+    assert md5(mc_file) == "18ab430278362e6e70ce7cda9081888f"
+
+
+def test_mkdir(monkeypatch, capsys, mc01_copy):
+    import ps2mc
+    patch_fixed_time(monkeypatch, ps2mc)
+
+    mc_file = mc01_copy.join("mc01.ps2").strpath
+
+    mymc.main(["mymc",
+               "-i", mc_file,
+               "mkdir", "p0rn"])
+
+    output = capsys.readouterr()
+    assert output.out == ""
+    assert output.err == ""
+
+    assert md5(mc_file) == "2be30a14246f34cdb157ea68f4905b85"
+
+
+def test_remove(capsys, mc01_copy):
+    mc_file = mc01_copy.join("mc01.ps2").strpath
+
+    mymc.main(["mymc",
+               "-i", mc_file,
+               "remove", "BESCES-50501REZ/BESCES-50501REZ"])
+
+    output = capsys.readouterr()
+    assert output.out == ""
+    assert output.err == ""
+
+    assert md5(mc_file) == "5d0ffec85ad1dc9a371e0ead55f4932b"
