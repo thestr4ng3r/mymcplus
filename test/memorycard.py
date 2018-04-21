@@ -268,3 +268,96 @@ def test_export_max(capsys, data, tmpdir):
     assert output.out == "Exporing BESCES-50501REZ to BESCES-50501REZ.max\n"
 
     assert md5(tmpdir.join("BESCES-50501REZ.max").strpath) == "3f63d38668a0a5a5fa508ab8c3bb469a"
+
+
+def test_import_psu(monkeypatch, capsys, data, mc02_copy):
+    import ps2mc
+    patch_fixed_time(monkeypatch, ps2mc)
+
+    mc_file = mc02_copy.join("mc02.ps2").strpath
+    psu_file = data.join("BESCES-50501REZ.psu").strpath
+
+    mymc.main(["mymc",
+               "-i", mc_file,
+               "import", psu_file])
+
+    output = capsys.readouterr()
+    assert output.out == "Importing " + psu_file + " to BESCES-50501REZ\n"
+    assert output.err == ""
+
+    assert md5(mc_file) == "4085992c23fc38d6c4ece5303dc77e74"
+
+
+def test_import_max(monkeypatch, capsys, data, mc02_copy):
+    import ps2mc
+    import ps2save
+    patch_fixed_time(monkeypatch, ps2mc)
+    patch_fixed_time(monkeypatch, ps2save)
+
+    mc_file = mc02_copy.join("mc02.ps2").strpath
+    max_file = data.join("BESCES-50501REZ.max").strpath
+
+    mymc.main(["mymc",
+               "-i", mc_file,
+               "import", max_file])
+
+    output = capsys.readouterr()
+    assert output.out == "Importing " + max_file + " to BESCES-50501REZ\n"
+
+    assert md5(mc_file) == "0e2dd8d53f05f6debe7d93aa726fc6e6"
+
+
+def test_import_sps(monkeypatch, capsys, data, mc02_copy):
+    import ps2mc
+    patch_fixed_time(monkeypatch, ps2mc)
+
+    mc_file = mc02_copy.join("mc02.ps2").strpath
+    sps_file = data.join("BESCES-50501REZ.sps").strpath
+
+    mymc.main(["mymc",
+               "-i", mc_file,
+               "import", sps_file])
+
+    output = capsys.readouterr()
+    assert output.out == "Importing " + sps_file + " to BESCES-50501REZ\n"
+    assert output.err == ""
+
+    assert md5(mc_file) == "9726ad34016df2586eb9663a12f9ba02"
+
+
+def test_import_xps(monkeypatch, capsys, data, mc02_copy):
+    import ps2mc
+    patch_fixed_time(monkeypatch, ps2mc)
+
+    mc_file = mc02_copy.join("mc02.ps2").strpath
+    xps_file = data.join("BESCES-50501REZ.xps").strpath
+
+    mymc.main(["mymc",
+               "-i", mc_file,
+               "import", xps_file])
+
+    output = capsys.readouterr()
+    assert output.out == "Importing " + xps_file + " to BESCES-50501REZ\n"
+    assert output.err == ""
+
+    assert md5(mc_file) == "9726ad34016df2586eb9663a12f9ba02"
+
+
+def test_import_cbs(monkeypatch, capsys, data, mc02_copy):
+    import ps2mc
+    import ps2save
+    patch_fixed_time(monkeypatch, ps2mc)
+    patch_fixed_time(monkeypatch, ps2save)
+
+    mc_file = mc02_copy.join("mc02.ps2").strpath
+    cbs_file = data.join("BESCES-50501REZ.cbs").strpath
+
+    mymc.main(["mymc",
+               "-i", mc_file,
+               "import", cbs_file])
+
+    output = capsys.readouterr()
+    assert output.out == "Importing " + cbs_file + " to BESCES-50501REZ\n"
+    assert output.err == ""
+
+    assert md5(mc_file) == "897b0fbd1965dc02a442e1723bd3df27"

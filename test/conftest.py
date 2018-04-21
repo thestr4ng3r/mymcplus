@@ -19,3 +19,8 @@ def data(tmpdir_factory):
 def mc01_copy(data, tmpdir):
     shutil.copy(data.join("mc01.ps2").strpath, tmpdir.strpath)
     return tmpdir
+
+@pytest.fixture
+def mc02_copy(data, tmpdir):
+    shutil.copy(data.join("mc02.ps2").strpath, tmpdir.strpath)
+    return tmpdir
