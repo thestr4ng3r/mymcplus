@@ -241,3 +241,30 @@ def test_remove_nonempty(capsys, mc01_copy):
     output = capsys.readouterr()
     assert output.out == ""
     assert output.err == "BESCES-50501REZ: directory not empty\n"
+
+
+def test_export_psu(capsys, data, tmpdir):
+    mc_file = data.join("mc01.ps2").strpath
+
+    mymc.main(["mymc",
+               "-i", mc_file,
+               "export", "-d", tmpdir.strpath, "-p", "BESCES-50501REZ"])
+
+    output = capsys.readouterr()
+    assert output.out == "Exporing BESCES-50501REZ to BESCES-50501REZ.psu\n"
+    assert output.err == ""
+
+    assert md5(tmpdir.join("BESCES-50501REZ.psu").strpath) == "d86c82e559c8250c894fbbc4405d8789"
+
+
+def test_export_max(capsys, data, tmpdir):
+    mc_file = data.join("mc01.ps2").strpath
+
+    mymc.main(["mymc",
+               "-i", mc_file,
+               "export", "-d", tmpdir.strpath, "-m", "BESCES-50501REZ"])
+
+    output = capsys.readouterr()
+    assert output.out == "Exporing BESCES-50501REZ to BESCES-50501REZ.max\n"
+
+    assert md5(tmpdir.join("BESCES-50501REZ.max").strpath) == "3f63d38668a0a5a5fa508ab8c3bb469a"
