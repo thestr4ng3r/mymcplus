@@ -6,7 +6,14 @@
 #
 
 """A utility for manipulating PS2 memory card images."""
+from __future__ import print_function
+from __future__ import division
 
+from builtins import map
+from builtins import str
+from builtins import range
+from past.utils import old_div
+from builtins import object
 _SCCS_ID = "@(#) mysc mymc.py 1.12 12/10/04 19:09:16\n"[:-1]
 
 import sys
@@ -47,7 +54,7 @@ if os.name == "nt":
 
 		def __setattr__(self, name, value):
 			if name == "encoding":
-				raise TypeError, "readonly attribute"
+				raise TypeError("readonly attribute")
 			return setattr(object.__getattribute__(self, "_f"),
 				       name, value)
 
@@ -86,7 +93,7 @@ def _copy(fout, fin):
 	
 	while True:
 		s = fin.read(1024)
-		if s == "":
+		if not s:
 			break
 		fout.write(s)
 	
@@ -123,7 +130,7 @@ def do_ls(cmd, mc, opts, args, opterr):
 					  % (ent[2],
 					     tm.tm_year, tm.tm_mon, tm.tm_mday,
 					     tm.tm_hour, tm.tm_min, tm.tm_sec,
-					     ent[8]))
+					     ent[8].decode("ascii")))
 		finally:
 			dir.close()
 			
@@ -154,7 +161,7 @@ def do_extract(cmd, mc, opts, args, opterr):
 		if opts.use_stdout:
 			opterr("The -o and -p options are mutually exclusive.")
 		dont_close_out = True
-		out = file(opts.output, "wb")
+		out = open(opts.output, "wb")
 	elif opts.use_stdout:
 		out = sys.stdout
 
@@ -202,7 +209,7 @@ def do_import(cmd, mc, opts, args, opterr):
 		
 	for filename in args:
 		sf = ps2save.ps2_save_file()
-		f = file(filename, "rb")
+		f = open(filename, "rb")
 		try:
 			ftype = ps2save.detect_file_type(f)
 			f.seek(0)
@@ -215,18 +222,18 @@ def do_import(cmd, mc, opts, args, opterr):
 			elif ftype == "sps":
 				sf.load_sharkport(f)
 			elif ftype == "npo":
-				raise io_error, (EIO, "nPort saves"
+				raise io_error(EIO, "nPort saves"
 						 " are not supported.",
 						 filename)
 			else:
-				raise io_error, (EIO, "Save file format not"
+				raise io_error(EIO, "Save file format not"
 						 " recognized", filename)
 		finally:
 			f.close()
 		dirname = opts.directory
 		if dirname == None:
-			dirname = sf.get_directory()[8]
-		print "Importing", filename, "to", dirname
+			dirname = sf.get_directory()[8].decode("ascii")
+		print("Importing", filename, "to", dirname)
 		if not mc.import_save_file(sf, opts.ignore_existing,
 						opts.directory):
 			print (filename + ": already in memory card image,"
@@ -272,9 +279,9 @@ def do_export(cmd, mc, opts, args, opterr):
 					continue
 				raise io_error(EEXIST, "File exists", filename)
 			
-		f = file(filename, "wb")
+		f = open(filename, "wb")
 		try:
-			print "Exporing", dirname, "to", filename
+			print("Exporing", dirname, "to", filename)
 			
 			if opts.type == "max":
 				sf.save_max_drive(f)
@@ -346,7 +353,7 @@ def _get_psx_title(mc, savename, enc):
 	(magic, icon, blocks, title) = struct.unpack("<2sBB64s28x32x", s)
 	if magic != "SC":
 		return None
-	return [ps2save.shift_jis_conv(zero_terminate(title), enc), ""]
+	return [ps2save.shift_jis_conv(zero_terminate(title), enc).decode(enc), ""]
 
 def do_dir(cmd, mc, opts, args, opterr):
 	if len(args) != 0:
@@ -358,7 +365,7 @@ def do_dir(cmd, mc, opts, args, opterr):
 			dirmode = ent[0]
 			if not mode_is_dir(dirmode):
 				continue
-			dirname = "/" + ent[8]
+			dirname = "/" + ent[8].decode("ascii")
 			mc.chdir(dirname)
 			length = mc.dir_size(".");
 			if opts.ascii:
@@ -389,36 +396,36 @@ def do_dir(cmd, mc, opts, args, opterr):
 			if type != None:
 				protection = type
 				
-			print "%-32s %s" % (ent[8], title[0])
+			print("%-32s %s" % (ent[8].decode("ascii"), title[0]))
 			print ("%4dKB %-25s %s"
-			       % (length / 1024, protection, title[1]))
-			print
+			       % (old_div(length, 1024), protection, title[1]))
+			print()
 	finally:
 		if f != None:
 			f.close()
 		dir.close()
 		
-	free = mc.get_free_space() / 1024
+	free = old_div(mc.get_free_space(), 1024)
 	if free > 999999:
-		free = "%d,%03d,%03d" % (free / 1000000, free / 1000 % 1000,
+		free = "%d,%03d,%03d" % (old_div(free, 1000000), free / 1000 % 1000,
 					 free % 1000)
 	elif free > 999:
-		free = "%d,%03d" % (free / 1000, free % 1000)
+		free = "%d,%03d" % (old_div(free, 1000), free % 1000)
 	else:
 		free = "%d" % free
 
-	print free + " KB Free"
+	print(free + " KB Free")
 
 def do_df(cmd, mc, opts, args, opterr):
 	if len(args) != 0:
 		opterr("Incorrect number of arguments.")
-	print mc.f.name + ":", mc.get_free_space(), "bytes free."
+	print(mc.f.name + ":", mc.get_free_space(), "bytes free.")
 
 def do_check(cmd, mc, opts, args, opterr):
 	if len(args) != 0:
 		opterr("Incorrect number of arguments.")
 	if mc.check():
-		print "No errors found."
+		print("No errors found.")
 		return 0
 	return 1
 	
@@ -427,8 +434,7 @@ def do_format(cmd, mcname, opts, args, opterr):
 		opterr("Incorrect number of arguments.")
 	pages_per_card = ps2mc.PS2MC_STANDARD_PAGES_PER_CARD
 	if opts.clusters != None:
-		pages_per_cluster = (ps2mc.PS2MC_CLUSTER_SIZE
-				     / ps2mc.PS2MC_STANDARD_PAGE_SIZE)
+		pages_per_cluster = (old_div(ps2mc.PS2MC_CLUSTER_SIZE, ps2mc.PS2MC_STANDARD_PAGE_SIZE))
 		pages_per_card = opts.clusters * pages_per_cluster
 	params = (not opts.no_ecc,
 		  ps2mc.PS2MC_STANDARD_PAGE_SIZE,
@@ -438,13 +444,13 @@ def do_format(cmd, mcname, opts, args, opterr):
 	if not opts.overwrite_existing:
 		exists = True
 		try:
-			file(mcname, "rb").close()
+			open(mcname, "rb").close()
 		except EnvironmentError:
 			exists = False
 		if exists:
-			raise io_error, (EEXIST, "file exists", mcname)
+			raise io_error(EEXIST, "file exists", mcname)
 
-	f = file(mcname, "w+b")
+	f = open(mcname, "w+b")
 	try:
 		ps2mc.ps2mc(f, True, params).close()
 	finally:
@@ -467,10 +473,10 @@ def do_create_pad(cmd, mc, opts, args, opterr):
 	length = mc.clusters_per_card
 	if len(args) > 1:
 		length = int(args[1])
-	pad = "\0" * mc.cluster_size
+	pad = b"\0" * mc.cluster_size
 	f = mc.open(args[0], "wb")
 	try:
-		for i in xrange(length):
+		for i in range(length):
 			f.write(pad)
 	finally:
 		f.close()
@@ -479,15 +485,15 @@ def do_create_pad(cmd, mc, opts, args, opterr):
 def do_frob(cmd, mc, opts, args, opterr):
 	mc.write_superblock()
 
-_trans = string.maketrans("".join(map(chr, range(32))), " " * 32)
+_trans = str.maketrans("".join(map(chr, list(range(32)))), " " * 32)
 
 def _print_bin(base, s):
 	for off in range(0, len(s), 16):
-		print "%04X" % (base + off),
+		print("%04X" % (base + off), end=' ')
 		a = s[off : off + 16]
 		for b in a:
-			print "%02X" % ord(b),
-		print "", a.translate(_trans)
+			print("%02X" % ord(b), end=' ')
+		print("", a.translate(_trans))
 	
 def _print_erase_block(mc, n):
 	ppb = mc.pages_per_erase_block
@@ -495,12 +501,12 @@ def _print_erase_block(mc, n):
 	for i in range(ppb):
 		s = mc.read_page(base + i)
 		_print_bin(i * mc.page_size, s)
-		print
+		print()
 		
 def do_print_good_blocks(cmd, mc, opts, args, opterr):
-	print "good_block2:"
+	print("good_block2:")
 	_print_erase_block(mc, mc.good_block2)
-	print "good_block1:"
+	print("good_block1:")
 	_print_erase_block(mc, mc.good_block1)
 
 def do_ecc_check(cmd, mc, opts, args, opterr):
@@ -508,7 +514,7 @@ def do_ecc_check(cmd, mc, opts, args, opterr):
 		try:
 			mc.read_page(i)
 		except ps2mc.ecc_error:
-			print "bad: %05x" % i
+			print("bad: %05x" % i)
 
 opt = optparse.make_option
 
@@ -680,7 +686,7 @@ class suboption_parser(optparse.OptionParser):
 	def exit(self, status = 0, msg = None):
 		if msg:
 			sys.stderr.write(msg)
-		raise subopt_error, status
+		raise subopt_error(status)
 
 class my_help_formatter(optparse.IndentedHelpFormatter):
 	"""A better formatter for optparser's help message"""
@@ -705,7 +711,7 @@ class my_help_formatter(optparse.IndentedHelpFormatter):
 		return "\n".join(lines) + "\n"
 
 def main(argv):
-	prog = argv[0].decode(sys.getdefaultencoding(), "replace")
+	prog = argv[0]
 	usage = "usage: %prog [-ih] memcard.ps2 command [...]"
 	description = ("Manipulate PS2 memory card images.\n\n"
 		       "Supported commands: ")
@@ -771,7 +777,7 @@ def main(argv):
 				ret = fn(cmd, mcname, subopts, subargs,
 					 subopt_parser.error)
 			else:
-				f = file(mcname, mode)
+				f = open(mcname, mode)
 				mc = ps2mc.ps2mc(f, opts.ignore_ecc)
 				ret = fn(cmd, mc, subopts, subargs,
 					 subopt_parser.error)
@@ -782,7 +788,7 @@ def main(argv):
 				# print "f.close()"
 				f.close()
 
-	except EnvironmentError, value:
+	except EnvironmentError as value:
 		if getattr(value, "filename", None) != None:
 			write_error(value.filename, value.strerror)
 			ret = 1
@@ -795,10 +801,11 @@ def main(argv):
 		if opts.debug:
 			raise
 
-	except subopt_error, (ret,):
+	except subopt_error as xxx_todo_changeme:
+		(ret,) = xxx_todo_changeme.args
 		pass
 	
-	except (ps2mc.error, ps2save.error), value:
+	except (ps2mc.error, ps2save.error) as value:
 		fn = getattr(value, "filename", None)
 		if fn == None:
 			fn = mcname

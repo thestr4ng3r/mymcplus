@@ -96,7 +96,7 @@ def test_check_root_directory(capsys, mc01_copy):
     mc_file = mc01_copy.join("mc01.ps2").strpath
     with open(mc_file, "r+b") as f:
         f.seek(0x200)
-        f.write("\x13\x37")
+        f.write(b"\x13\x37")
 
     assert md5(mc_file) == "bec7e8c3884806024b9eb9599dc4315f"
 

@@ -36,7 +36,7 @@ DF_EXISTS      = 0x8000
 def zero_terminate(s):
 	"""Truncate a string at the first NUL ('\0') character, if any."""
 	
-	i = s.find('\0')
+	i = s.find(b'\0')
 	if i == -1:
 		return s
 	return s[:i]
