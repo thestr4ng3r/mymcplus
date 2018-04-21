@@ -89,7 +89,7 @@ camera_near = [0, 3, -6]
 camera_flat = [0, 2, -7.5]
 
 def get_dialog_units(win):
-	return win.ConvertDialogPointToPixels((1, 1))[0]
+	return win.ConvertDialogToPixels((1, 1))[0]
 
 def single_title(title):
 	"""Convert the two parts of an icon.sys title into one string."""
@@ -105,7 +105,7 @@ def _get_icon_resource_as_images(name):
 	# count = wx.Image_GetImageCount(f, wx.BITMAP_TYPE_ICO)
 	for i in range(count):
 		f.seek(0)
-		images.append(wx.ImageFromStream(f, wx.BITMAP_TYPE_ICO, i))
+		images.append(wx.Image(f, wx.BITMAP_TYPE_ICO, i))
 	return images
 	
 def get_icon_resource(name):
@@ -113,8 +113,8 @@ def get_icon_resource(name):
 
 	bundle = wx.IconBundle()
 	for img in _get_icon_resource_as_images(name):
-		bmp = wx.BitmapFromImage(img)
-		icon = wx.IconFromBitmap(bmp)
+		bmp = wx.Bitmap(img)
+		icon = wx.Icon(bmp)
 		bundle.AddIcon(icon)
 	return bundle
 
@@ -128,7 +128,7 @@ def get_icon_resource_bmp(name, size):
 	for img in _get_icon_resource_as_images(name):
 		sz = (img.GetWidth(), img.GetHeight())
 		if sz == size:
-			return wx.BitmapFromImage(img)
+			return wx.Bitmap(img)
 		if sz[0] >= size[0] and sz[1] >= size[1]:
 			if ((best_size[0] < size[0] or best_size[1] < size[1])
 			    or sz[0] * sz[1] < best_size[0] * best_size[1]):
@@ -138,7 +138,7 @@ def get_icon_resource_bmp(name, size):
 			best = img
 			best_size = sz
 	img = best.Rescale(size[0], size[1], wx.IMAGE_QUALITY_HIGH)
-	return wx.BitmapFromImage(img)
+	return wx.Bitmap(img)
 
 
 class dirlist_control(wx.ListCtrl):
@@ -150,10 +150,10 @@ class dirlist_control(wx.ListCtrl):
 		self.evt_select = evt_select
 		wx.ListCtrl.__init__(self, parent, wx.ID_ANY,
 				     style = wx.LC_REPORT)
-		wx.EVT_LIST_COL_CLICK(self, -1, self.evt_col_click)
-		wx.EVT_LIST_ITEM_FOCUSED(self, -1, evt_focus)
-		wx.EVT_LIST_ITEM_SELECTED(self, -1, self.evt_item_selected)
-		wx.EVT_LIST_ITEM_DESELECTED(self, -1, self.evt_item_deselected)
+		self.Bind(wx.EVT_LIST_COL_CLICK, self.evt_col_click)
+		self.Bind(wx.EVT_LIST_ITEM_FOCUSED, evt_focus)
+		self.Bind(wx.EVT_LIST_ITEM_SELECTED, self.evt_item_selected)
+		self.Bind(wx.EVT_LIST_ITEM_DESELECTED, self.evt_item_deselected)
 
 	def _update_dirtable(self, mc, dir):
 		self.dirtable = table = []
@@ -243,13 +243,13 @@ class dirlist_control(wx.ListCtrl):
 		
 		for (i, a) in enumerate(self.dirtable):
 			(ent, icon_sys, size, title) = a
-			li = self.InsertStringItem(i, ent[8])
-			self.SetStringItem(li, 1, "%dK" % (size / 1024))
+			li = self.InsertItem(i, ent[8])
+			self.SetItem(li, 1, "%dK" % (size / 1024))
 			m = ent[6]
 			m = ("%04d-%02d-%02d %02d:%02d"
 			     % (m[5], m[4], m[3], m[2], m[1]))
-			self.SetStringItem(li, 2, m)
-			self.SetStringItem(li, 3, single_title(title))
+			self.SetItem(li, 2, m)
+			self.SetItem(li, 3, single_title(title))
 			self.SetItemData(li, i)
 
 		du = get_dialog_units(self)
@@ -460,7 +460,7 @@ class gui_config(wx.Config):
 def add_tool(toolbar, id, label, ico):
 	tbsize = toolbar.GetToolBitmapSize()
 	bmp = get_icon_resource_bmp(ico, tbsize)
-	return toolbar.AddLabelTool(id, label, bmp, shortHelp = label)
+	return toolbar.AddTool(id, label, bmp, shortHelp = label)
 
 class gui_frame(wx.Frame):
 	"""The main top level window."""
@@ -506,19 +506,19 @@ class gui_frame(wx.Frame):
 			size = (500, 350)
 		wx.Frame.__init__(self, parent, wx.ID_ANY, title, size = size)
 
-		wx.EVT_CLOSE(self, self.evt_close)
+		self.Bind(wx.EVT_CLOSE, self.evt_close)
 
 		self.config = gui_config()
 		self.title = title
 
 		self.SetIcons(get_icon_resource("mc4.ico"))
 				
-		wx.EVT_MENU(self, self.ID_CMD_EXIT, self.evt_cmd_exit)
-		wx.EVT_MENU(self, self.ID_CMD_OPEN, self.evt_cmd_open)
-		wx.EVT_MENU(self, self.ID_CMD_EXPORT, self.evt_cmd_export)
-		wx.EVT_MENU(self, self.ID_CMD_IMPORT, self.evt_cmd_import)
-		wx.EVT_MENU(self, self.ID_CMD_DELETE, self.evt_cmd_delete)
-		wx.EVT_MENU(self, self.ID_CMD_ASCII, self.evt_cmd_ascii)
+		self.Bind(wx.EVT_MENU, self.evt_cmd_exit, id=self.ID_CMD_EXIT)
+		self.Bind(wx.EVT_MENU, self.evt_cmd_open, id=self.ID_CMD_OPEN)
+		self.Bind(wx.EVT_MENU, self.evt_cmd_export, id=self.ID_CMD_EXPORT)
+		self.Bind(wx.EVT_MENU, self.evt_cmd_import, id=self.ID_CMD_IMPORT)
+		self.Bind(wx.EVT_MENU, self.evt_cmd_delete, id=self.ID_CMD_DELETE)
+		self.Bind(wx.EVT_MENU, self.evt_cmd_ascii, id=self.ID_CMD_ASCII)
 		
 		filemenu = wx.Menu()
 		filemenu.Append(self.ID_CMD_OPEN, "&Open...",
@@ -541,7 +541,7 @@ class gui_frame(wx.Frame):
 			"Show descriptions in ASCII instead of Shift-JIS")
 
 
-		wx.EVT_MENU_OPEN(self, self.evt_menu_open);
+		self.Bind(wx.EVT_MENU_OPEN, self.evt_menu_open)
 
 		self.CreateToolBar(wx.TB_HORIZONTAL)
 		self.toolbar = toolbar = self.GetToolBar()
@@ -554,7 +554,7 @@ class gui_frame(wx.Frame):
 		toolbar.Realize()
 
 		self.statusbar = self.CreateStatusBar(2,
-						      style = wx.ST_SIZEGRIP)
+						      style = wx.STB_SIZEGRIP)
 		self.statusbar.SetStatusWidths([-2, -1])
 		
 		panel = wx.Panel(self, wx.ID_ANY, (0, 0))
@@ -914,7 +914,7 @@ class gui_frame(wx.Frame):
 def run(filename = None):
 	"""Display a GUI for working with memory card images."""
 
-	wx_app = wx.PySimpleApp()
+	wx_app = wx.App()
 	frame = gui_frame(None, "mymc", filename)
 	return wx_app.MainLoop()
 	
