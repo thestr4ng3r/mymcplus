@@ -48,7 +48,7 @@ def test_extract(capsys, data, tmpdir):
     assert md5(out_file) == "5388344a2d4bb429b9a18ff683a8a691"
 
 
-def test_add(monkeypatch, capsys, data, tmpdir):
+def test_add(monkeypatch, capsys, mc01_copy, tmpdir):
     import ps2mc
     patch_fixed_time(monkeypatch, ps2mc)
     patch_localtime(monkeypatch)
@@ -57,7 +57,7 @@ def test_add(monkeypatch, capsys, data, tmpdir):
     with open(file, "w") as f:
          f.write("Hello World!\n")
 
-    mc_file = data.join("mc01.ps2").strpath
+    mc_file = mc01_copy.join("mc01.ps2").strpath
 
     mymc.main(["mymc",
                "-i", mc_file,
@@ -80,3 +80,30 @@ def test_add(monkeypatch, capsys, data, tmpdir):
     assert output.err == ""
 
     assert md5(mc_file) == "faa75353a97328c7d8fe38756c38fdd9"
+
+
+def test_check_ok(capsys, data):
+    mymc.main(["mymc",
+               "-i", data.join("mc01.ps2").strpath,
+               "check"])
+
+    output = capsys.readouterr()
+    assert output.out == "No errors found.\n"
+    assert output.err == ""
+
+
+def test_check_root_directory(capsys, mc01_copy):
+    mc_file = mc01_copy.join("mc01.ps2").strpath
+    with open(mc_file, "r+b") as f:
+        f.seek(0x200)
+        f.write("\x13\x37")
+
+    assert md5(mc_file) == "bec7e8c3884806024b9eb9599dc4315f"
+
+    mymc.main(["mymc",
+               "-i", mc_file,
+               "check"])
+
+    output = capsys.readouterr()
+    assert output.err == mc_file + ": Root directory damaged.\n"
+    assert output.out == ""
