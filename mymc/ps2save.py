@@ -192,7 +192,7 @@ def shift_jis_conv(src, encoding = None):
             for uc2 in shift_jis_normalize_table.get(uc, uc):
                 a.append(char_substs.get(uc2, uc2))
     
-    return u"".join(a).encode(encoding, "replace")
+    return "".join(a)
 
 def rc4_crypt(s, t):
     """RC4 encrypt/decrypt the string t using the permutation s.
@@ -243,8 +243,8 @@ def icon_sys_title(icon_sys, encoding = None):
     
     offset = icon_sys[1]
     title = icon_sys[14]
-    title2 = shift_jis_conv(title[offset:], encoding).decode(encoding)
-    title1 = shift_jis_conv(title[:offset], encoding).decode(encoding)
+    title2 = shift_jis_conv(title[offset:], encoding)
+    title1 = shift_jis_conv(title[:offset], encoding)
     return (title1, title2)
 
 def _read_fixed(f, n):

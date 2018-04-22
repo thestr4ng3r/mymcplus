@@ -101,7 +101,7 @@ def single_title(title):
     """Convert the two parts of an icon.sys title into one string."""
     
     title = title[0] + " " + title[1]
-    return u" ".join(title.split())
+    return " ".join(title.split())
 
 def _get_icon_resource_as_images(name):
     ico = guires.resources[name]
