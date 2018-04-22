@@ -362,8 +362,7 @@ class ps2_save_file(object):
         if lzari == None:
             raise error("The lzari module is needed to "
                       " decompress MAX Drive saves.")
-        s = lzari.decode(s, length,
-                 "decompressing " + self.dirent[8] + ": ")
+        s = lzari.decode(s, length, "decompressing " + self.dirent[8].decode("ascii") + ": ")
         dirlen = self.dirent[2]
         timestamp = self.dirent[3]
         off = 0
