@@ -413,7 +413,7 @@ class lzari_codec(object):
         else:
             self.next_table[modpos] = hist_invalid
             self.next2_table[modpos] = hist_invalid
-            key2 = ""
+            key2 = b""
             # key2 = src[pos2 : pos2 + 1]
             suffix_table[key] = [1, pos, {key2: pos}, len(key2)]
 
@@ -658,7 +658,7 @@ else:
         if r == -1:
             raise MemoryError("out of memory during compression")
         if compressed.value == None:
-            return ""
+            return b""
         ret = ctypes.string_at(compressed.value, comp_len.value)
         mylzari_free_encoded(compressed)
         return ret;

@@ -41,3 +41,11 @@ def test_decode():
     compressed = b";\xeaJrm\xe8\xbe\xd0\xc14(:\xa9\xb4\xd4\x8b\xde\tN\xb7-\xb1D\xac\x8e\xeb{\xa5$R>\xc4\x1b\xb8\xc2:\xb2"
     s = lzari.decode(compressed, len(original_s))
     assert s == original_s
+
+
+def test_encode_save():
+    from data_lzari import max_data_raw as data
+    from data_lzari import max_data_compressed as compressed_correct
+    compressed = lzari.encode(data)
+    assert len(compressed) == 3964
+    assert compressed == compressed_correct
