@@ -106,11 +106,11 @@ def single_title(title):
 def _get_icon_resource_as_images(name):
     ico = guires.resources[name]
     images = []
-    f = io.StringIO(ico)
+    f = io.BytesIO(ico)
     count = struct.unpack("<HHH", ico[0:6])[2]
     # count = wx.Image_GetImageCount(f, wx.BITMAP_TYPE_ICO)
     for i in range(count):
-        f.seek(0)
+        #f.seek(0)
         images.append(wx.Image(f, wx.BITMAP_TYPE_ICO, i))
     return images
     
@@ -169,7 +169,7 @@ class dirlist_control(wx.ListCtrl):
         for ent in dir:
             if not ps2mc.mode_is_dir(ent[0]):
                 continue
-            dirname = "/" + ent[8]
+            dirname = "/" + ent[8].decode("ascii")
             s = mc.get_icon_sys(dirname)
             if s == None:
                 continue
@@ -670,7 +670,7 @@ class gui_frame(wx.Frame):
         
         f = None
         try:
-            f = file(filename, "r+b")
+            f = open(filename, "r+b")
             mc = ps2mc.ps2mc(f)
         except EnvironmentError as value:
             if f != None:
@@ -749,7 +749,7 @@ class gui_frame(wx.Frame):
         dirtable = self.dirlist.dirtable
         sfiles = []
         for i in selected:
-            dirname = dirtable[i][0][8]
+            dirname = dirtable[i][0][8].decode("ascii")
             try:
                 sf = mc.export_save_file("/" + dirname)
                 longname = ps2save.make_longname(dirname, sf)
@@ -774,7 +774,7 @@ class gui_frame(wx.Frame):
             if fn == "":
                 return
             try:
-                f = file(fn, "wb")
+                f = open(fn, "wb")
                 try:
                     if fn.endswith(".max"):
                         sf.save_max_drive(f)
@@ -800,7 +800,7 @@ class gui_frame(wx.Frame):
         for (dirname, sf, longname) in sfiles:
             fn = os.path.join(dir, longname) + ".psu"
             try:
-                f = file(fn, "wb")
+                f = open(fn, "wb")
                 sf.save_ems(f)
                 f.close()
                 count += 1
@@ -815,7 +815,7 @@ class gui_frame(wx.Frame):
 
     def _do_import(self, fn):
         sf = ps2save.ps2_save_file()
-        f = file(fn, "rb")
+        f = open(fn, "rb")
         try:
             ft = ps2save.detect_file_type(f)
             f.seek(0)
@@ -881,7 +881,7 @@ class gui_frame(wx.Frame):
         selected = self.dirlist.selected
         dirtable = self.dirlist.dirtable
 
-        dirnames = [dirtable[i][0][8]
+        dirnames = [dirtable[i][0][8].decode("ascii")
                 for i in selected]
         if len(selected) == 1:
             title = dirtable[list(selected)[0]][3]

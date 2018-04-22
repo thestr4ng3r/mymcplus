@@ -618,7 +618,7 @@ def make_longname(dirname, sf):
         title = icon_sys_title(icon_sys, "ascii")
         title = title[0] + " " + title[1]
         title = " ".join(title.split())
-    crc = binascii.crc32("")
+    crc = binascii.crc32(b"")
     for (ent, data) in sf:
         crc = binascii.crc32(data, crc)
     if len(dirname) >= 12 and (dirname[0:2] in ("BA", "BJ", "BE", "BK")):

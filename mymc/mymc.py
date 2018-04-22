@@ -173,7 +173,7 @@ def do_extract(cmd, mc, opts, args, opterr):
                     _copy(out, f)
                     continue
                 a = filename.split("/")
-                o = file(a[-1], "wb")
+                o = open(a[-1], "wb")
                 try:
                     _copy(o, f)
                 finally:
