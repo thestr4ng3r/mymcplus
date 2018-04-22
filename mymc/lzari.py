@@ -64,15 +64,15 @@ MAX_SUFFIX_CHAIN = 50    # limit on how many identical suffixes to try to match
 #    print "@@@ %s %04x" % (msg, value)
 debug = lambda value, msg: None
 
-_tr_16 = str.maketrans("0123456789abcdef",
-              "\x00\x01\x02\x03"
-              "\x10\x11\x12\x13"
-              "\x20\x21\x22\x23"
-              "\x30\x31\x32\x33")
-_tr_4 = str.maketrans("0123",
-             "\x00\x01"
-             "\x10\x11")
-_tr_2 = str.maketrans("01", "\x00\x01")
+_tr_16 = bytes.maketrans(b"0123456789abcdef",
+              b"\x00\x01\x02\x03"
+              b"\x10\x11\x12\x13"
+              b"\x20\x21\x22\x23"
+              b"\x30\x31\x32\x33")
+_tr_4 = bytes.maketrans(b"0123",
+             b"\x00\x01"
+             b"\x10\x11")
+_tr_2 = bytes.maketrans(b"01", b"\x00\x01")
 
 def string_to_bit_array(s):
     """Convert a string to an array containing a sequence of bits."""
