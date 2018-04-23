@@ -6,14 +6,7 @@
 #
 
 """A utility for manipulating PS2 memory card images."""
-from __future__ import print_function
-from __future__ import division
 
-from builtins import map
-from builtins import str
-from builtins import range
-from past.utils import old_div
-from builtins import object
 _SCCS_ID = "@(#) mysc mymc.py 1.12 12/10/04 19:09:16\n"[:-1]
 
 import sys
@@ -398,19 +391,18 @@ def do_dir(cmd, mc, opts, args, opterr):
                 
             print("%-32s %s" % (ent[8].decode("ascii"), title[0]))
             print ("%4dKB %-25s %s"
-                   % (old_div(length, 1024), protection, title[1]))
+                   % (length // 1024, protection, title[1]))
             print()
     finally:
         if f != None:
             f.close()
         dir.close()
         
-    free = old_div(mc.get_free_space(), 1024)
+    free = mc.get_free_space() // 1024
     if free > 999999:
-        free = "%d,%03d,%03d" % (old_div(free, 1000000), free / 1000 % 1000,
-                     free % 1000)
+        free = "%d,%03d,%03d" % (free // 1000000, free // 1000 % 1000, free % 1000)
     elif free > 999:
-        free = "%d,%03d" % (old_div(free, 1000), free % 1000)
+        free = "%d,%03d" % (free // 1000, free % 1000)
     else:
         free = "%d" % free
 

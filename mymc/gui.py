@@ -6,13 +6,7 @@
 #
 
 """Graphical user-interface for mymc."""
-from __future__ import print_function
-from __future__ import division
 
-from future import standard_library
-standard_library.install_aliases()
-from builtins import range
-from past.utils import old_div
 _SCCS_ID = "@(#) mymc gui.py 1.4 12/10/04 18:51:51\n"
 
 import os

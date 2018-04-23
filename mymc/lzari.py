@@ -10,12 +10,7 @@ in Python.  Largely based on LZARI.C, one key difference is the use of
 a two level dicitionary look up during compression rather than
 LZARI.C's binary search tree.
 """
-from __future__ import print_function
-from __future__ import division
 
-from builtins import range
-from builtins import object
-from past.utils import old_div
 _SCCS_ID = "@(#) mysc lzari.py 1.6 12/10/04 19:07:53\n"
 
 import sys
@@ -149,14 +144,14 @@ class lzari_codec(object):
         self.position_cum = [0] * (HIST_LEN + 1)
         a = 0
         for i in range(HIST_LEN, 0, -1):
-            a =  a + old_div(10000, (200 + i))
+            a =  a + 10000 // (200 + i)
             self.position_cum[i - 1] = a
         
     def search(self, table, x):
         c = 1
         s = len(table) - 1
         while True:
-            a = old_div((s + c), 2)
+            a = (s + c) // 2
             if table[a] <= x:
                 s = a
             else:
@@ -230,7 +225,7 @@ class lzari_codec(object):
         
         _range = high - low
         max_cum_freq = sym_cum[MAX_CHAR]
-        n = old_div(((code - low + 1) * max_cum_freq - 1), _range)
+        n = ((code - low + 1) * max_cum_freq - 1) // _range
         i = bisect_right(sym_cum, n, 1)
         high = low + sym_cum[i] * _range // max_cum_freq
         low += sym_cum[i - 1] * _range // max_cum_freq
@@ -263,11 +258,8 @@ class lzari_codec(object):
     def decode_position(self):
         _range = self.high - self.low
         max_cum = self.position_cum[0]
-        pos = self.search(self.position_cum,
-                  old_div(((self.code - self.low + 1)
-                   * max_cum - 1), _range)) - 1
-        self.high = (self.low +
-                 self.position_cum[pos] * _range // max_cum)
+        pos = self.search(self.position_cum, ((self.code - self.low + 1) * max_cum - 1) // _range) - 1
+        self.high = (self.low + self.position_cum[pos] * _range // max_cum)
         self.low += self.position_cum[pos + 1] * _range // max_cum
         while True:
             if self.low < QUADRANT2:

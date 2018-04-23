@@ -7,9 +7,6 @@
 # A simple interface for working with various PS2 save file formats.
 #
 
-from builtins import map
-from builtins import range
-from builtins import object
 _SCCS_ID = "@(#) mysc ps2save.py 1.7 12/10/04 19:17:16\n"
 
 import sys

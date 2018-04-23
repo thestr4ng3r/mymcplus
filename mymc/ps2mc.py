@@ -6,14 +6,7 @@
 #
 
 """Manipulate PS2 memory card images."""
-from __future__ import print_function
-from __future__ import division
 
-from builtins import str
-from builtins import map
-from builtins import range
-from past.utils import old_div
-from builtins import object
 _SCCS_ID = "@(#) mysc ps2mc.py 1.10 12/10/04 19:10:35\n"
 
 import sys
@@ -377,7 +370,7 @@ class ps2mc_file(object):
         while size > 0:
             off = pos % cluster_size
             l = min(cluster_size - off, size)
-            buf = self.read_file_cluster(old_div(pos, cluster_size))
+            buf = self.read_file_cluster(pos // cluster_size)
             if buf == None:
                 break
             if eol != None:
@@ -407,7 +400,7 @@ class ps2mc_file(object):
         # print "@@@ write", pos, size
         i = 0
         while size > 0:
-            cluster = old_div(pos, cluster_size)
+            cluster = pos // cluster_size
             off = pos % cluster_size
             l = min(cluster_size - off, size)
             s = out[i : i + l]
@@ -524,10 +517,10 @@ class ps2mc_directory(object):
         self.f.seek(offset * PS2MC_DIRENT_LENGTH, whence)
 
     def tell(self):
-        return old_div(self.f.tell(), PS2MC_DIRENT_LENGTH)
+        return self.f.tell() // PS2MC_DIRENT_LENGTH
 
     def __len__(self):
-        return old_div(self.f.length, PS2MC_DIRENT_LENGTH)
+        return self.f.length // PS2MC_DIRENT_LENGTH
     
     def __getitem__(self, index):
         # print "@@@ getitem", index, self.f.name
@@ -705,11 +698,11 @@ class ps2mc(object):
         pages_per_card = round_down(param_pages_per_card,
                         pages_per_erase_block)
         cluster_size = PS2MC_CLUSTER_SIZE
-        pages_per_cluster = old_div(cluster_size, page_size)
-        clusters_per_erase_block = (old_div(pages_per_erase_block, pages_per_cluster))
-        erase_blocks_per_card = old_div(pages_per_card, pages_per_erase_block)
-        clusters_per_card = old_div(pages_per_card, pages_per_cluster)
-        epc = old_div(cluster_size, 4)
+        pages_per_cluster = cluster_size // page_size
+        clusters_per_erase_block = pages_per_erase_block // pages_per_cluster
+        erase_blocks_per_card = pages_per_card // pages_per_erase_block
+        clusters_per_card = pages_per_card // pages_per_cluster
+        epc = cluster_size // 4
 
         if (page_size < PS2MC_DIRENT_LENGTH
             or pages_per_cluster < 1
@@ -937,7 +930,7 @@ class ps2mc(object):
 
     def read_fat_cluster(self, n):
         indirect_offset = n % self.entries_per_cluster
-        dbl_offset = old_div(n, self.entries_per_cluster)
+        dbl_offset = n // self.entries_per_cluster
         indirect_cluster = self.indirect_fat_cluster_list[dbl_offset]
         indirect_fat = self._read_fat_cluster(indirect_cluster)
         cluster = indirect_fat[indirect_offset]
@@ -949,7 +942,7 @@ class ps2mc(object):
                      "FAT cluster index out of range"
                      " (%d)" % n)
         offset = n % self.entries_per_cluster
-        fat_cluster = old_div(n, self.entries_per_cluster)
+        fat_cluster = n // self.entries_per_cluster
         (fat, cluster) = self.read_fat_cluster(fat_cluster)
         return (fat, offset, cluster)
 
@@ -1246,8 +1239,8 @@ class ps2mc(object):
         self.update_dirent_all(dirloc, None, ent)
         
         while cluster != PS2MC_FAT_CHAIN_END:
-            if old_div(cluster, epc) < self.fat_cursor:
-                self.fat_cursor = old_div(cluster, epc)
+            if cluster // epc < self.fat_cursor:
+                self.fat_cursor = cluster // epc
             next_cluster = self.lookup_fat(cluster)
             if next_cluster & PS2MC_FAT_ALLOCATED_BIT == 0:
                 # corrupted
