@@ -426,7 +426,7 @@ def do_format(cmd, mcname, opts, args, opterr):
         opterr("Incorrect number of arguments.")
     pages_per_card = ps2mc.PS2MC_STANDARD_PAGES_PER_CARD
     if opts.clusters != None:
-        pages_per_cluster = (old_div(ps2mc.PS2MC_CLUSTER_SIZE, ps2mc.PS2MC_STANDARD_PAGE_SIZE))
+        pages_per_cluster = (ps2mc.PS2MC_CLUSTER_SIZE // ps2mc.PS2MC_STANDARD_PAGE_SIZE)
         pages_per_card = opts.clusters * pages_per_cluster
     params = (not opts.no_ecc,
           ps2mc.PS2MC_STANDARD_PAGE_SIZE,

@@ -170,7 +170,7 @@ class lzari_codec(object):
             c = 0
             for i in range(MAX_CHAR, 0, -1):
                 self.sym_cum[MAX_CHAR - i] = c
-                a = old_div((self.sym_freq[i] + 1), 2)
+                a = (self.sym_freq[i] + 1) // 2
                 self.sym_freq[i] = a
                 c += a
             self.sym_cum[MAX_CHAR] = c
@@ -197,7 +197,7 @@ class lzari_codec(object):
             c = 0
             for i in range(MAX_CHAR, 0, -1):
                 sym_cum[i] = c
-                a = old_div((sym_freq[i] + 1), 2)
+                a = (sym_freq[i] + 1) // 2
                 sym_freq[i] = a
                 c += a
             sym_cum[0] = c

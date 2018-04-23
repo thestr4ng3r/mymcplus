@@ -244,7 +244,7 @@ class dirlist_control(wx.ListCtrl):
         for (i, a) in enumerate(self.dirtable):
             (ent, icon_sys, size, title) = a
             li = self.InsertItem(i, ent[8])
-            self.SetItem(li, 1, "%dK" % (old_div(size, 1024)))
+            self.SetItem(li, 1, "%dK" % (size // 1024))
             m = ent[6]
             m = ("%04d-%02d-%02d %02d:%02d"
                  % (m[5], m[4], m[3], m[2], m[1]))
@@ -651,8 +651,8 @@ class gui_frame(wx.Frame):
         if mc == None:
             status = "No memory card image"
         else:
-            free = old_div(mc.get_free_space(), 1024)
-            limit = old_div(mc.get_allocatable_space(), 1024)
+            free = mc.get_free_space() // 1024
+            limit = mc.get_allocatable_space() // 1024
             status = "%dK of %dK free" % (free, limit)
         self.statusbar.SetStatusText(status, 1)
 
