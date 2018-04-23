@@ -3,7 +3,7 @@ import io
 import wx
 import struct
 
-from gui import resources
+from . import resources
 
 def single_title(title):
     """Convert the two parts of an icon.sys title into one string."""

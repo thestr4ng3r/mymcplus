@@ -17,14 +17,11 @@ import binascii
 import array
 import zlib
 
-from round import div_round_up, round_up
-from ps2mc_dir import *
-from sjistab import shift_jis_normalize_table
+from .round import div_round_up, round_up
+from .ps2mc_dir import *
+from .sjistab import shift_jis_normalize_table
 
-try:
-    import lzari
-except ImportError:
-    lzari = None
+from . import lzari
 
 PS2SAVE_MAX_MAGIC = b"Ps2PowerSave"
 PS2SAVE_SPS_MAGIC = b"\x0d\0\0\0SharkPortSave"

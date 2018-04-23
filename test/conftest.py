@@ -5,7 +5,7 @@ import tarfile
 import shutil
 
 test_dir = os.path.dirname(os.path.abspath(__file__))
-sys.path.append(os.path.abspath(os.path.join(test_dir, "..", "mymc")))
+sys.path.append(os.path.abspath(os.path.join(test_dir, "..")))
 
 @pytest.fixture(scope="session")
 def data(tmpdir_factory):

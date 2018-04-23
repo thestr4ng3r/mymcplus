@@ -17,10 +17,10 @@ from errno import EACCES, ENOENT, EEXIST, ENOTDIR, EISDIR, EROFS, ENOTEMPTY,\
 import fnmatch
 import traceback
 
-from round import *
-from ps2mc_ecc import *
-from ps2mc_dir import *
-import ps2save
+from .round import *
+from .ps2mc_ecc import *
+from .ps2mc_dir import *
+from . import ps2save
 
 PS2MC_MAGIC = b"Sony PS2 Memory Card Format "
 PS2MC_FAT_ALLOCATED_BIT = 0x80000000

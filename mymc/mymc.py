@@ -15,10 +15,10 @@ import optparse
 import textwrap
 from errno import EEXIST, EIO
 
-import ps2mc
-import ps2save
-from ps2mc_dir import *
-import verbuild
+from . import ps2mc
+from . import ps2save
+from .ps2mc_dir import *
+from . import verbuild
 
 class subopt_error(Exception):
     pass
@@ -449,7 +449,7 @@ def do_gui(cmd, mcname, opts, args, opterr):
         opterr("Incorrect number of arguments.")
 
     #try:
-    from gui import gui
+    from .gui import gui
     #except ImportError:
     #    write_error(None, "GUI not available")
     #    return 1
@@ -698,7 +698,7 @@ class my_help_formatter(optparse.IndentedHelpFormatter):
             lines.append(line)
         return "\n".join(lines) + "\n"
 
-def main(argv):
+def main(argv=sys.argv):
     prog = argv[0]
     usage = "usage: %prog [-ih] memcard.ps2 command [...]"
     description = ("Manipulate PS2 memory card images.\n\n"
@@ -807,6 +807,4 @@ def main(argv):
 
     return ret
 
-if __name__ == "__main__":
-    sys.exit(main(sys.argv))
 

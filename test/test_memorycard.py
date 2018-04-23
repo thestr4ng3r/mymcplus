@@ -1,5 +1,5 @@
 
-import mymc
+from mymc import mymc
 
 
 def md5(fn):
@@ -49,7 +49,7 @@ def test_extract(capsys, data, tmpdir):
 
 
 def test_add(monkeypatch, capsys, mc01_copy, tmpdir):
-    import ps2mc
+    from mymc import ps2mc
     patch_fixed_time(monkeypatch, ps2mc)
     patch_localtime(monkeypatch)
 
@@ -184,7 +184,7 @@ def test_dir(capsys, data):
 
 
 def test_format(monkeypatch, capsys, tmpdir):
-    import ps2mc
+    from mymc import ps2mc
     patch_fixed_time(monkeypatch, ps2mc)
 
     mc_file = tmpdir.join("mc.ps2").strpath
@@ -201,7 +201,7 @@ def test_format(monkeypatch, capsys, tmpdir):
 
 
 def test_mkdir(monkeypatch, capsys, mc01_copy):
-    import ps2mc
+    from mymc import ps2mc
     patch_fixed_time(monkeypatch, ps2mc)
 
     mc_file = mc01_copy.join("mc01.ps2").strpath
@@ -271,7 +271,7 @@ def test_export_max(capsys, data, tmpdir):
 
 
 def test_import_psu(monkeypatch, capsys, data, mc02_copy):
-    import ps2mc
+    from mymc import ps2mc
     patch_fixed_time(monkeypatch, ps2mc)
 
     mc_file = mc02_copy.join("mc02.ps2").strpath
@@ -289,8 +289,8 @@ def test_import_psu(monkeypatch, capsys, data, mc02_copy):
 
 
 def test_import_max(monkeypatch, capsys, data, mc02_copy):
-    import ps2mc
-    import ps2save
+    from mymc import ps2mc
+    from mymc import ps2save
     patch_fixed_time(monkeypatch, ps2mc)
     patch_fixed_time(monkeypatch, ps2save)
 
@@ -308,7 +308,7 @@ def test_import_max(monkeypatch, capsys, data, mc02_copy):
 
 
 def test_import_sps(monkeypatch, capsys, data, mc02_copy):
-    import ps2mc
+    from mymc import ps2mc
     patch_fixed_time(monkeypatch, ps2mc)
 
     mc_file = mc02_copy.join("mc02.ps2").strpath
@@ -326,7 +326,7 @@ def test_import_sps(monkeypatch, capsys, data, mc02_copy):
 
 
 def test_import_xps(monkeypatch, capsys, data, mc02_copy):
-    import ps2mc
+    from mymc import ps2mc
     patch_fixed_time(monkeypatch, ps2mc)
 
     mc_file = mc02_copy.join("mc02.ps2").strpath
@@ -344,8 +344,8 @@ def test_import_xps(monkeypatch, capsys, data, mc02_copy):
 
 
 def test_import_cbs(monkeypatch, capsys, data, mc02_copy):
-    import ps2mc
-    import ps2save
+    from mymc import ps2mc
+    from mymc import ps2save
     patch_fixed_time(monkeypatch, ps2mc)
     patch_fixed_time(monkeypatch, ps2save)
 

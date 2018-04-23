@@ -19,12 +19,11 @@ if os.name == "nt" and hasattr(sys, "setdefaultencoding"):
     sys.setdefaultencoding("mbcs")
 import wx
 
-import ps2mc
-import ps2save
-from gui import resources
-from gui.icon_window import IconWindow
-from gui.dirlist_control import DirListControl
-from gui import utils
+from .. import ps2mc
+from .. import ps2save
+from .icon_window import IconWindow
+from .dirlist_control import DirListControl
+from . import utils
 
 
 class GuiConfig(wx.Config):

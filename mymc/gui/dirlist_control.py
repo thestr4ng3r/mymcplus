@@ -1,10 +1,10 @@
 
 import wx
 
-import ps2mc
-import ps2save
+from .. import ps2mc
+from .. import ps2save
 
-from gui import utils
+from . import utils
 
 
 def get_dialog_units(win):

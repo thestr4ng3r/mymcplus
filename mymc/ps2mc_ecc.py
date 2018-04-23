@@ -14,7 +14,7 @@ _SCCS_ID = "@(#) mysc ps2mc_ecc.py 1.4 07/12/17 02:34:04\n"
 
 import array
 
-from round import div_round_up
+from .round import div_round_up
 
 try:
     import ctypes

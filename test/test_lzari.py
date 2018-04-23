@@ -1,6 +1,6 @@
 
-import lzari
 import array
+from mymc import lzari
 
 
 def bits_to_str(bits):

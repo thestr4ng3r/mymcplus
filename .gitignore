@@ -3,3 +3,6 @@
 .idea/
 .pytest_cache/
 /test/data/
+build/
+dist/
+*.egg-info/
