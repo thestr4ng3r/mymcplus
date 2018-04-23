@@ -11,17 +11,13 @@ _SCCS_ID = "@(#) mysc mymc.py 1.12 12/10/04 19:09:16\n"[:-1]
 
 import sys
 import os
-import time
 import optparse
 import textwrap
-import binascii
-import string
 from errno import EEXIST, EIO
 
 import ps2mc
 import ps2save
 from ps2mc_dir import *
-from round import *
 import verbuild
 
 class subopt_error(Exception):
@@ -452,11 +448,11 @@ def do_gui(cmd, mcname, opts, args, opterr):
     if len(args) != 0:
         opterr("Incorrect number of arguments.")
 
-    try:
-        import gui
-    except ImportError:
-        write_error(None, "GUI not available")
-        return 1
+    #try:
+    from gui import gui
+    #except ImportError:
+    #    write_error(None, "GUI not available")
+    #    return 1
 
     gui.run(mcname)
     return 0
@@ -729,7 +725,7 @@ def main(argv):
 
     if len(args) == 0:
         try:
-            import gui
+            from gui import gui
         except ImportError:
             gui = None
         if gui != None:
