@@ -17,18 +17,19 @@
 
 import wx
 
-try:
-    import ctypes
-    import mymcsup
-    D3DXVECTOR3 = mymcsup.D3DXVECTOR3
-    D3DXVECTOR4 = mymcsup.D3DXVECTOR4
-    D3DXVECTOR4_ARRAY3 = mymcsup.D3DXVECTOR4_ARRAY3
-
-    def mkvec4arr3(l):
-        return D3DXVECTOR4_ARRAY3(*[D3DXVECTOR4(*vec)
-                        for vec in l])
-except ImportError:
-    mymcsup = None
+#try:
+#    import ctypes
+#    import mymcsup
+#    D3DXVECTOR3 = mymcsup.D3DXVECTOR3
+#    D3DXVECTOR4 = mymcsup.D3DXVECTOR4
+#    D3DXVECTOR4_ARRAY3 = mymcsup.D3DXVECTOR4_ARRAY3
+#
+#    def mkvec4arr3(l):
+#        return D3DXVECTOR4_ARRAY3(*[D3DXVECTOR4(*vec)
+#                        for vec in l])
+#except ImportError:
+#    mymcsup = None
+mcsup = None
 
 
 lighting_none = {"lighting": False,
@@ -83,13 +84,7 @@ camera_near = [0, 3, -6]
 camera_flat = [0, 2, -7.5]
 
 class IconWindow(wx.Window):
-    """Displays a save file's 3D icon.  Windows only.
-
-    The rendering of the 3D icon is handled by C++ code in the
-    mymcsup DLL which subclasses this window.  This class mainly
-    handles configuration options that affect how the 3D icon is
-    displayed.
-    """
+    """Displays a save file's 3D icon."""
 
     ID_CMD_ANIMATE = 201
     ID_CMD_LIGHT_NONE = 202
@@ -112,73 +107,55 @@ class IconWindow(wx.Window):
                       ID_CMD_CAMERA_HIGH: camera_high}
 
     def append_menu_options(self, win, menu):
-        menu.AppendCheckItem(IconWindow.ID_CMD_ANIMATE,
-                             "Animate Icons")
+        menu.AppendCheckItem(IconWindow.ID_CMD_ANIMATE, "Animate Icons")
         menu.AppendSeparator()
-        menu.AppendRadioItem(IconWindow.ID_CMD_LIGHT_NONE,
-                             "Lighting Off")
-        menu.AppendRadioItem(IconWindow.ID_CMD_LIGHT_ICON,
-                             "Icon Lighting")
-        menu.AppendRadioItem(IconWindow.ID_CMD_LIGHT_ALT1,
-                             "Alternate Lighting")
-        menu.AppendRadioItem(IconWindow.ID_CMD_LIGHT_ALT2,
-                             "Alternate Lighting 2")
+        menu.AppendRadioItem(IconWindow.ID_CMD_LIGHT_NONE, "Lighting Off")
+        menu.AppendRadioItem(IconWindow.ID_CMD_LIGHT_ICON, "Icon Lighting")
+        menu.AppendRadioItem(IconWindow.ID_CMD_LIGHT_ALT1, "Alternate Lighting")
+        menu.AppendRadioItem(IconWindow.ID_CMD_LIGHT_ALT2, "Alternate Lighting 2")
         menu.AppendSeparator()
-        menu.AppendRadioItem(IconWindow.ID_CMD_CAMERA_FLAT,
-                             "Camera Flat")
-        menu.AppendRadioItem(IconWindow.ID_CMD_CAMERA_DEFAULT,
-                             "Camera Default")
-        menu.AppendRadioItem(IconWindow.ID_CMD_CAMERA_NEAR,
-                             "Camera Near")
-        menu.AppendRadioItem(IconWindow.ID_CMD_CAMERA_HIGH,
-                             "Camera High")
+        menu.AppendRadioItem(IconWindow.ID_CMD_CAMERA_FLAT, "Camera Flat")
+        menu.AppendRadioItem(IconWindow.ID_CMD_CAMERA_DEFAULT, "Camera Default")
+        menu.AppendRadioItem(IconWindow.ID_CMD_CAMERA_NEAR, "Camera Near")
+        menu.AppendRadioItem(IconWindow.ID_CMD_CAMERA_HIGH, "Camera High")
 
-        wx.EVT_MENU(win, IconWindow.ID_CMD_ANIMATE,
-                    self.evt_menu_animate)
-        wx.EVT_MENU(win, IconWindow.ID_CMD_LIGHT_NONE,
-                    self.evt_menu_light)
-        wx.EVT_MENU(win, IconWindow.ID_CMD_LIGHT_ICON,
-                    self.evt_menu_light)
-        wx.EVT_MENU(win, IconWindow.ID_CMD_LIGHT_ALT1,
-                    self.evt_menu_light)
-        wx.EVT_MENU(win, IconWindow.ID_CMD_LIGHT_ALT2,
-                    self.evt_menu_light)
+        win.Bind(wx.EVT_MENU, self.evt_menu_animate, id=IconWindow.ID_CMD_ANIMATE)
+        win.Bind(wx.EVT_MENU, self.evt_menu_light, id=IconWindow.ID_CMD_LIGHT_NONE)
+        win.Bind(wx.EVT_MENU, self.evt_menu_light, id=IconWindow.ID_CMD_LIGHT_ICON)
+        win.Bind(wx.EVT_MENU, self.evt_menu_light, id=IconWindow.ID_CMD_LIGHT_ALT1)
+        win.Bind(wx.EVT_MENU, self.evt_menu_light, id=IconWindow.ID_CMD_LIGHT_ALT2)
 
-        wx.EVT_MENU(win, IconWindow.ID_CMD_CAMERA_FLAT,
-                    self.evt_menu_camera)
-        wx.EVT_MENU(win, IconWindow.ID_CMD_CAMERA_DEFAULT,
-                    self.evt_menu_camera)
-        wx.EVT_MENU(win, IconWindow.ID_CMD_CAMERA_NEAR,
-                    self.evt_menu_camera)
-        wx.EVT_MENU(win, IconWindow.ID_CMD_CAMERA_HIGH,
-                    self.evt_menu_camera)
+        win.Bind(wx.EVT_MENU, self.evt_menu_camera, id=IconWindow.ID_CMD_CAMERA_FLAT)
+        win.Bind(wx.EVT_MENU, self.evt_menu_camera, id=IconWindow.ID_CMD_CAMERA_DEFAULT)
+        win.Bind(wx.EVT_MENU, self.evt_menu_camera, id=IconWindow.ID_CMD_CAMERA_NEAR)
+        win.Bind(wx.EVT_MENU, self.evt_menu_camera, id=IconWindow.ID_CMD_CAMERA_HIGH)
 
     def __init__(self, parent, focus):
         self.failed = False
         wx.Window.__init__(self, parent)
-        if mymcsup == None:
-            self.failed = True
-            return
-        r = mymcsup.init_icon_renderer(focus.GetHandle(),
-                                       self.GetHandle())
-        if r == -1:
-            print("init_icon_renderer failed")
-            self.failed = True
-            return
+        #if mymcsup == None:
+        #    self.failed = True
+        #    return
+        #r = mymcsup.init_icon_renderer(focus.GetHandle(), self.GetHandle())
+        #if r == -1:
+        #    print("init_icon_renderer failed")
+        #    self.failed = True
+        #    return
 
-        self.config = config = mymcsup.icon_config()
-        config.animate = True
+        #self.config = config = mymcsup.icon_config()
+        #config.animate = True
 
         self.menu = wx.Menu()
         self.append_menu_options(self, self.menu)
         self.set_lighting(self.ID_CMD_LIGHT_ALT2)
         self.set_camera(self.ID_CMD_CAMERA_DEFAULT)
 
-        wx.EVT_CONTEXT_MENU(self, self.evt_context_menu)
+        self.Bind(wx.EVT_CONTEXT_MENU, self.evt_context_menu)
 
     def __del__(self):
-        if mymcsup != None:
-            mymcsup.delete_icon_renderer()
+        #if mymcsup != None:
+        #    mymcsup.delete_icon_renderer()
+        pass
 
     def update_menu(self, menu):
         """Update the content menu according to the current config."""
@@ -190,49 +167,50 @@ class IconWindow(wx.Window):
     def load_icon(self, icon_sys, icon):
         """Pass the raw icon data to the support DLL for display."""
 
-        if self.failed:
-            return
+        #if self.failed:
+        #    return
 
-        if icon_sys == None or icon == None:
-            r = mymcsup.load_icon(None, 0, None, 0)
-        else:
-            r = mymcsup.load_icon(icon_sys, len(icon_sys),
-                                  icon, len(icon))
-        if r != 0:
-            print("load_icon", r)
-            self.failed = True
+        #if icon_sys == None or icon == None:
+        #    r = mymcsup.load_icon(None, 0, None, 0)
+        #else:
+        #    r = mymcsup.load_icon(icon_sys, len(icon_sys), icon, len(icon))
+        #if r != 0:
+        #    print("load_icon", r)
+        #    self.failed = True
 
-    def _set_lighting(self, lighting, vertex_diffuse, alt_lighting,
-                      light_dirs, light_colours, ambient):
-        if self.failed:
-            return
-        config = self.config
-        config.lighting = lighting
-        config.vertex_diffuse = vertex_diffuse
-        config.alt_lighting = alt_lighting
-        config.light_dirs = mkvec4arr3(light_dirs)
-        config.light_colours = mkvec4arr3(light_colours)
-        config.ambient = D3DXVECTOR4(*ambient)
-        if mymcsup.set_config(config) == -1:
-            self.failed = True
+    def _set_lighting(self, lighting, vertex_diffuse, alt_lighting, light_dirs, light_colours, ambient):
+        #if self.failed:
+        #    return
+        #config = self.config
+        #config.lighting = lighting
+        #config.vertex_diffuse = vertex_diffuse
+        #config.alt_lighting = alt_lighting
+        #config.light_dirs = mkvec4arr3(light_dirs)
+        #config.light_colours = mkvec4arr3(light_colours)
+        #config.ambient = D3DXVECTOR4(*ambient)
+        #if mymcsup.set_config(config) == -1:
+        #    self.failed = True
+        pass
 
     def set_lighting(self, id):
         self.lighting_id = id
         self._set_lighting(**self.light_options[id])
 
     def set_animate(self, animate):
-        if self.failed:
-            return
-        self.config.animate = animate
-        if mymcsup.set_config(self.config) == -1:
-            self.failed = True
+        #if self.failed:
+        #    return
+        #self.config.animate = animate
+        #if mymcsup.set_config(self.config) == -1:
+        #    self.failed = True
+        pass
 
     def _set_camera(self, camera):
-        if self.failed:
-            return
-        self.config.camera = mymcsup.D3DXVECTOR3(*camera)
-        if mymcsup.set_config(self.config) == -1:
-            self.failed = True
+        #if self.failed:
+        #    return
+        #self.config.camera = mymcsup.D3DXVECTOR3(*camera)
+        #if mymcsup.set_config(self.config) == -1:
+        #    self.failed = True
+        pass
 
     def set_camera(self, id):
         self.camera_id = id

@@ -304,8 +304,8 @@ class GuiFrame(wx.Frame):
 
         a = ps2save.unpack_icon_sys(icon_sys)
         try:
-            mc.chdir("/" + ent[8])
-            f = mc.open(a[15], "rb")
+            mc.chdir("/" + ent[8].decode("ascii"))
+            f = mc.open(a[15].decode("ascii"), "rb")
             try: 
                 icon = f.read()
             finally:
