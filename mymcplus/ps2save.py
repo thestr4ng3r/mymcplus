@@ -615,7 +615,7 @@ def make_longname(dirname, sf):
 
     icon_sys = sf.get_icon_sys()
     title = ""
-    if icon_sys != None:
+    if icon_sys is not None:
         title = icon_sys_title(icon_sys, "ascii")
         title = title[0] + " " + title[1]
         title = " ".join(title.split())
@@ -629,6 +629,5 @@ def make_longname(dirname, sf):
             #dirname = dirname[2:6] + dirname[7:12]
             dirname = dirname[2:12]
 
-    return fix_filename("%s %s (%08X)"
-                % (dirname, title, crc & 0xFFFFFFFF))
+    return fix_filename("%s %s (%08X)" % (dirname, title, crc & 0xFFFFFFFF))
 

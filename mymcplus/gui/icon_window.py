@@ -15,12 +15,12 @@
 # along with mymc+.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-from array import array
-
 import wx
 from wx import glcanvas
 
 from OpenGL.GL import *
+
+from .. import ps2icon
 
 
 lighting_none = {"lighting": False,
@@ -165,6 +165,8 @@ class IconWindow(wx.Window):
         self.canvas = glcanvas.GLCanvas(self, attribList=attrib_list)
         self.context = glcanvas.GLContext(self.canvas)
 
+        self.icon = None
+
         self.program = None
         self.vbo = None
         self.vao = None
@@ -229,7 +231,7 @@ class IconWindow(wx.Window):
         glEnableVertexAttribArray(_ATTRIB_VERTEX_POS)
 
 
-    def paint(self, event):
+    def paint(self, _):
         self.context.SetCurrent(self.canvas)
 
         if not self.gl_initialized:
@@ -250,23 +252,21 @@ class IconWindow(wx.Window):
     def update_menu(self, menu):
         """Update the content menu according to the current config."""
 
-        menu.Check(IconWindow.ID_CMD_ANIMATE, self.config.animate)
+        menu.Check(IconWindow.ID_CMD_ANIMATE, False)#self.config.animate)
         menu.Check(self.lighting_id, True)
         menu.Check(self.camera_id, True)
 
-    def load_icon(self, icon_sys, icon):
+    def load_icon(self, icon_sys_data, icon_data):
         """Pass the raw icon data to the support DLL for display."""
 
-        #if self.failed:
-        #    return
+        if self.failed:
+            return
 
-        #if icon_sys == None or icon == None:
-        #    r = mymcsup.load_icon(None, 0, None, 0)
-        #else:
-        #    r = mymcsup.load_icon(icon_sys, len(icon_sys), icon, len(icon))
-        #if r != 0:
-        #    print("load_icon", r)
-        #    self.failed = True
+        if icon_data is None:
+            self.icon = None
+        else:
+            self.icon = ps2icon.Icon(icon_data) # TODO: catch exceptions and set self.icon to None
+
 
     def _set_lighting(self, lighting, vertex_diffuse, alt_lighting, light_dirs, light_colours, ambient):
         #if self.failed:
@@ -311,7 +311,8 @@ class IconWindow(wx.Window):
         self.PopupMenu(self.menu)
 
     def evt_menu_animate(self, event):
-        self.set_animate(not self.config.animate)
+        #self.set_animate(not self.config.animate)
+        pass
 
     def evt_menu_light(self, event):
         self.set_lighting(event.GetId())

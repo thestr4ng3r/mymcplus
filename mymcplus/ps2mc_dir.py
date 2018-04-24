@@ -57,55 +57,29 @@ _dirent_fmt = "<HHL8sLL8sL28x448s"
 # secs, mins, hours, mday, month, year
 _tod_fmt = "<xBBBBBH"
 
-#
-# Use the new Struct object if available
-# 
-if hasattr(struct, "Struct"):
-    _dirent_struct = struct.Struct(_dirent_fmt)
-    _tod_struct = struct.Struct(_tod_fmt)
+_dirent_struct = struct.Struct(_dirent_fmt)
+_tod_struct = struct.Struct(_tod_fmt)
 
-    def unpack_tod(s):
-        return _tod_struct.unpack(s)
-    
-    def pack_tod(tod):
-        return _tod_struct.pack(tod)
-    
-    def unpack_dirent(s):
-        ent = _dirent_struct.unpack(s)
-        ent = list(ent)
-        ent[3] = _tod_struct.unpack(ent[3])
-        ent[6] = _tod_struct.unpack(ent[6])
-        ent[8] = zero_terminate(ent[8])
-        return ent
+def unpack_tod(s):
+    return _tod_struct.unpack(s)
 
-    def pack_dirent(ent):
-        ent = list(ent)
-        ent[3] = _tod_struct.pack(*ent[3])
-        ent[6] = _tod_struct.pack(*ent[6])
-        return _dirent_struct.pack(*ent)
-else:
-    def unpack_tod(s):
-        return struct.unpack(_tod_fmt, s)
+def pack_tod(tod):
+    return _tod_struct.pack(tod)
 
-    def pack_tod(tod):
-        return struct.pack(_tod_fmt, tod)
-    
-    def unpack_dirent(s):
-        # mode, ???, length, created,
-        # fat_cluster, parent_entry, modified, attr,
-        # name
-        ent = struct.unpack(_dirent_fmt, s)
-        ent = list(ent)
-        ent[3] = struct.unpack(_tod_fmt, ent[3])
-        ent[6] = struct.unpack(_tod_fmt, ent[6])
-        ent[8] = zero_terminate(ent[8])
-        return ent
+def unpack_dirent(s):
+    ent = _dirent_struct.unpack(s)
+    ent = list(ent)
+    ent[3] = _tod_struct.unpack(ent[3])
+    ent[6] = _tod_struct.unpack(ent[6])
+    ent[8] = zero_terminate(ent[8])
+    return ent
 
-    def pack_dirent(ent):
-        ent = list(ent)
-        ent[3] = struct.pack(_tod_fmt, *ent[3])
-        ent[6] = struct.pack(_tod_fmt, *ent[6])
-        return struct.pack(_dirent_fmt, *ent)
+def pack_dirent(ent):
+    ent = list(ent)
+    ent[3] = _tod_struct.pack(*ent[3])
+    ent[6] = _tod_struct.pack(*ent[6])
+    return _dirent_struct.pack(*ent)
+
 
 def time_to_tod(when):
     """Convert a Python time value to a ToD tuple"""

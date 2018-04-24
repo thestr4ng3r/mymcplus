@@ -1796,7 +1796,7 @@ class ps2mc(object):
         s = f.read(964)
         f.close()
         if len(s) == 964 and s[0:4] == b"PS2D":
-            return s;
+            return s
         return None
 
     def dir_size(self, dirname):

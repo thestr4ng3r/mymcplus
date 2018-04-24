@@ -15,4 +15,16 @@
 # along with mymc+.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-__all__ = ["gui", "lzari", "mymc", "ps2mc", "ps2mc_dir", "ps2mc_ecc", "ps2save", "round", "sjistab", "verbuild"]
+__all__ = [
+    "gui",
+    "ps2icon",
+    "lzari",
+    "mymc",
+    "ps2mc",
+    "ps2mc_dir",
+    "ps2mc_ecc",
+    "ps2save",
+    "round",
+    "sjistab",
+    "verbuild"
+]
