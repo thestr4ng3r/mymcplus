@@ -15,4 +15,11 @@
 # along with mymc+.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-__all__ = ["dirlist_control", "gui", "icon_window", "resources", "utils"]
+__all__ = [
+    "dirlist_control",
+    "gui",
+    "icon_window",
+    "linalg",
+    "resources",
+    "utils",
+]
