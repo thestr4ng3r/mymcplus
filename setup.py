@@ -2,12 +2,12 @@
 from setuptools import setup
 
 setup(
-    name="mymc-plus",
+    name="mymcplus",
     version="3.0",
-    packages=["mymc"],
+    packages=["mymcplus", "mymcplus.gui"],
     entry_points={
         "console_scripts": [
-            "mymc-plus = mymc.mymc:main"
+            "mymcplus = mymcplus.mymc:main"
         ]
     },
     install_requires=[

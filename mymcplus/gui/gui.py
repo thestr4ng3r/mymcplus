@@ -5,9 +5,9 @@
 # Public Domain
 #
 
-"""Graphical user-interface for mymc."""
+"""Graphical user-interface for mymcplus."""
 
-_SCCS_ID = "@(#) mymc gui.py 1.4 12/10/04 18:51:51\n"
+_SCCS_ID = "@(#) mymcplus gui.py 1.4 12/10/04 18:51:51\n"
 
 import os
 import sys
@@ -34,7 +34,7 @@ class GuiConfig(wx.Config):
     ascii = "ASCII Descriptions"
     
     def __init__(self):
-        wx.Config.__init__(self, "mymc", "Ross Ridge",
+        wx.Config.__init__(self, "mymcplus", "Ross Ridge",
                    style = wx.CONFIG_USE_LOCAL_FILE)
 
     def get_memcard_dir(self, default = None):
@@ -70,7 +70,7 @@ class GuiFrame(wx.Frame):
     ID_CMD_DELETE = wx.ID_DELETE
     ID_CMD_ASCII = 106
     
-    def message_box(self, message, caption = "mymc", style = wx.OK,
+    def message_box(self, message, caption = "mymcplus", style = wx.OK,
             x = -1, y = -1):
         return wx.MessageBox(message, caption, style, self, x, y)
 
@@ -509,7 +509,7 @@ def run(filename = None):
     """Display a GUI for working with memory card images."""
 
     wx_app = wx.App()
-    frame = GuiFrame(None, "mymc", filename)
+    frame = GuiFrame(None, "mymcplus", filename)
     return wx_app.MainLoop()
     
 if __name__ == "__main__":

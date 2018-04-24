@@ -1,5 +1,5 @@
 #
-# mymc.py
+# mymcplus.py
 #
 # By Ross Ridge
 # Public Domain
@@ -7,7 +7,7 @@
 
 """A utility for manipulating PS2 memory card images."""
 
-_SCCS_ID = "@(#) mysc mymc.py 1.12 12/10/04 19:09:16\n"[:-1]
+_SCCS_ID = "@(#) mysc mymcplus.py 1.12 12/10/04 19:09:16\n"[:-1]
 
 import sys
 import os
@@ -706,7 +706,7 @@ def main(argv=sys.argv):
     for cmd in sorted(cmd_table.keys()):
         description += "\n   " + cmd + ": " + cmd_table[cmd][3]
         
-    version = ("mymc "
+    version = ("mymcplus "
            + verbuild.MYMC_VERSION_MAJOR
            + "." + verbuild.MYMC_VERSION_BUILD
            + "   (" + _SCCS_ID + ")")
@@ -725,7 +725,7 @@ def main(argv=sys.argv):
 
     if len(args) == 0:
         try:
-            from gui import gui
+            from .gui import gui
         except ImportError:
             gui = None
         if gui != None:

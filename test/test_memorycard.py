@@ -1,5 +1,5 @@
 
-from mymc import mymc
+from mymcplus import mymc
 
 
 def md5(fn):
@@ -22,7 +22,7 @@ def patch_localtime(monkeypatch):
 
 def test_ls(monkeypatch, capsys, data):
     patch_localtime(monkeypatch)
-    mymc.main(["mymc",
+    mymc.main(["mymcplus",
                "-i", data.join("mc01.ps2").strpath,
                "ls"])
 
@@ -37,7 +37,7 @@ def test_ls(monkeypatch, capsys, data):
 def test_extract(capsys, data, tmpdir):
     out_file = tmpdir.join("BESCES-50501REZ").strpath
 
-    mymc.main(["mymc",
+    mymc.main(["mymcplus",
                "-i", data.join("mc01.ps2").strpath,
                "extract", "-o", out_file, "BESCES-50501REZ/BESCES-50501REZ"])
 
@@ -49,7 +49,7 @@ def test_extract(capsys, data, tmpdir):
 
 
 def test_add(monkeypatch, capsys, mc01_copy, tmpdir):
-    from mymc import ps2mc
+    from mymcplus import ps2mc
     patch_fixed_time(monkeypatch, ps2mc)
     patch_localtime(monkeypatch)
 
@@ -59,7 +59,7 @@ def test_add(monkeypatch, capsys, mc01_copy, tmpdir):
 
     mc_file = mc01_copy.join("mc01.ps2").strpath
 
-    mymc.main(["mymc",
+    mymc.main(["mymcplus",
                "-i", mc_file,
                "add", file])
 
@@ -67,7 +67,7 @@ def test_add(monkeypatch, capsys, mc01_copy, tmpdir):
     assert output.out == ""
     assert output.err == ""
 
-    mymc.main(["mymc",
+    mymc.main(["mymcplus",
                "-i", mc_file,
                "ls"])
 
@@ -83,7 +83,7 @@ def test_add(monkeypatch, capsys, mc01_copy, tmpdir):
 
 
 def test_check_ok(capsys, data):
-    mymc.main(["mymc",
+    mymc.main(["mymcplus",
                "-i", data.join("mc01.ps2").strpath,
                "check"])
 
@@ -100,7 +100,7 @@ def test_check_root_directory(capsys, mc01_copy):
 
     assert md5(mc_file) == "bec7e8c3884806024b9eb9599dc4315f"
 
-    mymc.main(["mymc",
+    mymc.main(["mymcplus",
                "-i", mc_file,
                "check"])
 
@@ -114,7 +114,7 @@ def test_check_root_directory(capsys, mc01_copy):
 def test_clear(capsys, mc01_copy):
     mc_file = mc01_copy.join("mc01.ps2").strpath
 
-    mymc.main(["mymc",
+    mymc.main(["mymcplus",
                "-i", mc_file,
                "clear", "-x", "BESCES-50501REZ"])
 
@@ -128,7 +128,7 @@ def test_clear(capsys, mc01_copy):
 def test_set(capsys, mc01_copy):
     mc_file = mc01_copy.join("mc01.ps2").strpath
 
-    mymc.main(["mymc",
+    mymc.main(["mymcplus",
                "-i", mc_file,
                "set", "-K", "BESCES-50501REZ"])
 
@@ -142,7 +142,7 @@ def test_set(capsys, mc01_copy):
 def test_delete(capsys, mc01_copy):
     mc_file = mc01_copy.join("mc01.ps2").strpath
 
-    mymc.main(["mymc",
+    mymc.main(["mymcplus",
                "-i", mc_file,
                "delete", "BESCES-50501REZ"])
 
@@ -156,7 +156,7 @@ def test_delete(capsys, mc01_copy):
 def test_df(capsys, data):
     mc_file = data.join("mc01.ps2").strpath
 
-    mymc.main(["mymc",
+    mymc.main(["mymcplus",
                "-i", mc_file,
                "df"])
 
@@ -168,7 +168,7 @@ def test_df(capsys, data):
 def test_dir(capsys, data):
     mc_file = data.join("mc01.ps2").strpath
 
-    mymc.main(["mymc",
+    mymc.main(["mymcplus",
                "-i", mc_file,
                "dir", "-a"])
 
@@ -184,12 +184,12 @@ def test_dir(capsys, data):
 
 
 def test_format(monkeypatch, capsys, tmpdir):
-    from mymc import ps2mc
+    from mymcplus import ps2mc
     patch_fixed_time(monkeypatch, ps2mc)
 
     mc_file = tmpdir.join("mc.ps2").strpath
 
-    mymc.main(["mymc",
+    mymc.main(["mymcplus",
                "-i", mc_file,
                "format"])
 
@@ -201,12 +201,12 @@ def test_format(monkeypatch, capsys, tmpdir):
 
 
 def test_mkdir(monkeypatch, capsys, mc01_copy):
-    from mymc import ps2mc
+    from mymcplus import ps2mc
     patch_fixed_time(monkeypatch, ps2mc)
 
     mc_file = mc01_copy.join("mc01.ps2").strpath
 
-    mymc.main(["mymc",
+    mymc.main(["mymcplus",
                "-i", mc_file,
                "mkdir", "p0rn"])
 
@@ -220,7 +220,7 @@ def test_mkdir(monkeypatch, capsys, mc01_copy):
 def test_remove(capsys, mc01_copy):
     mc_file = mc01_copy.join("mc01.ps2").strpath
 
-    mymc.main(["mymc",
+    mymc.main(["mymcplus",
                "-i", mc_file,
                "remove", "BESCES-50501REZ/BESCES-50501REZ"])
 
@@ -234,7 +234,7 @@ def test_remove(capsys, mc01_copy):
 def test_remove_nonempty(capsys, mc01_copy):
     mc_file = mc01_copy.join("mc01.ps2").strpath
 
-    mymc.main(["mymc",
+    mymc.main(["mymcplus",
                "-i", mc_file,
                "remove", "BESCES-50501REZ"])
 
@@ -246,7 +246,7 @@ def test_remove_nonempty(capsys, mc01_copy):
 def test_export_psu(capsys, data, tmpdir):
     mc_file = data.join("mc01.ps2").strpath
 
-    mymc.main(["mymc",
+    mymc.main(["mymcplus",
                "-i", mc_file,
                "export", "-d", tmpdir.strpath, "-p", "BESCES-50501REZ"])
 
@@ -260,7 +260,7 @@ def test_export_psu(capsys, data, tmpdir):
 def test_export_max(capsys, data, tmpdir):
     mc_file = data.join("mc01.ps2").strpath
 
-    mymc.main(["mymc",
+    mymc.main(["mymcplus",
                "-i", mc_file,
                "export", "-d", tmpdir.strpath, "-m", "BESCES-50501REZ"])
 
@@ -271,13 +271,13 @@ def test_export_max(capsys, data, tmpdir):
 
 
 def test_import_psu(monkeypatch, capsys, data, mc02_copy):
-    from mymc import ps2mc
+    from mymcplus import ps2mc
     patch_fixed_time(monkeypatch, ps2mc)
 
     mc_file = mc02_copy.join("mc02.ps2").strpath
     psu_file = data.join("BESCES-50501REZ.psu").strpath
 
-    mymc.main(["mymc",
+    mymc.main(["mymcplus",
                "-i", mc_file,
                "import", psu_file])
 
@@ -289,15 +289,15 @@ def test_import_psu(monkeypatch, capsys, data, mc02_copy):
 
 
 def test_import_max(monkeypatch, capsys, data, mc02_copy):
-    from mymc import ps2mc
-    from mymc import ps2save
+    from mymcplus import ps2mc
+    from mymcplus import ps2save
     patch_fixed_time(monkeypatch, ps2mc)
     patch_fixed_time(monkeypatch, ps2save)
 
     mc_file = mc02_copy.join("mc02.ps2").strpath
     max_file = data.join("BESCES-50501REZ.max").strpath
 
-    mymc.main(["mymc",
+    mymc.main(["mymcplus",
                "-i", mc_file,
                "import", max_file])
 
@@ -308,13 +308,13 @@ def test_import_max(monkeypatch, capsys, data, mc02_copy):
 
 
 def test_import_sps(monkeypatch, capsys, data, mc02_copy):
-    from mymc import ps2mc
+    from mymcplus import ps2mc
     patch_fixed_time(monkeypatch, ps2mc)
 
     mc_file = mc02_copy.join("mc02.ps2").strpath
     sps_file = data.join("BESCES-50501REZ.sps").strpath
 
-    mymc.main(["mymc",
+    mymc.main(["mymcplus",
                "-i", mc_file,
                "import", sps_file])
 
@@ -326,13 +326,13 @@ def test_import_sps(monkeypatch, capsys, data, mc02_copy):
 
 
 def test_import_xps(monkeypatch, capsys, data, mc02_copy):
-    from mymc import ps2mc
+    from mymcplus import ps2mc
     patch_fixed_time(monkeypatch, ps2mc)
 
     mc_file = mc02_copy.join("mc02.ps2").strpath
     xps_file = data.join("BESCES-50501REZ.xps").strpath
 
-    mymc.main(["mymc",
+    mymc.main(["mymcplus",
                "-i", mc_file,
                "import", xps_file])
 
@@ -344,15 +344,15 @@ def test_import_xps(monkeypatch, capsys, data, mc02_copy):
 
 
 def test_import_cbs(monkeypatch, capsys, data, mc02_copy):
-    from mymc import ps2mc
-    from mymc import ps2save
+    from mymcplus import ps2mc
+    from mymcplus import ps2save
     patch_fixed_time(monkeypatch, ps2mc)
     patch_fixed_time(monkeypatch, ps2save)
 
     mc_file = mc02_copy.join("mc02.ps2").strpath
     cbs_file = data.join("BESCES-50501REZ.cbs").strpath
 
-    mymc.main(["mymc",
+    mymc.main(["mymcplus",
                "-i", mc_file,
                "import", cbs_file])
 
