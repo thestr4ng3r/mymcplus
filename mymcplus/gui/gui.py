@@ -15,7 +15,7 @@
 # along with mymc+.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-"""Graphical user-interface for mymcplus."""
+"""Graphical user-interface for mymc+."""
 
 import os
 import sys
@@ -42,8 +42,7 @@ class GuiConfig(wx.Config):
     ascii = "ASCII Descriptions"
     
     def __init__(self):
-        wx.Config.__init__(self, "mymcplus", "Ross Ridge",
-                   style = wx.CONFIG_USE_LOCAL_FILE)
+        wx.Config.__init__(self, "mymc+", style = wx.CONFIG_USE_LOCAL_FILE)
 
     def get_memcard_dir(self, default = None):
         return self.Read(GuiConfig.memcard_dir, default)
@@ -294,8 +293,6 @@ class GuiFrame(wx.Frame):
     def evt_dirlist_item_focused(self, event):
         if self.icon_win == None:
             return
-        
-        mc = self.mc
 
         i = event.GetData()
         (ent, icon_sys, size, title) = self.dirlist.dirtable[i]
@@ -303,10 +300,16 @@ class GuiFrame(wx.Frame):
         self.info2.SetLabel(title[1])
 
         a = ps2save.unpack_icon_sys(icon_sys)
+
+        mc = self.mc
+        if mc is None:
+            self.icon_win.load_icon(None, None)
+            return
+
         try:
             mc.chdir("/" + ent[8].decode("ascii"))
             f = mc.open(a[15].decode("ascii"), "rb")
-            try: 
+            try:
                 icon = f.read()
             finally:
                 f.close()
@@ -517,7 +520,7 @@ def run(filename = None):
     """Display a GUI for working with memory card images."""
 
     wx_app = wx.App()
-    frame = GuiFrame(None, "mymcplus", filename)
+    frame = GuiFrame(None, "mymc+", filename)
     return wx_app.MainLoop()
     
 if __name__ == "__main__":
