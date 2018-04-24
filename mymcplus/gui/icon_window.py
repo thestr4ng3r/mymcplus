@@ -16,20 +16,9 @@
 #
 
 import wx
+from wx import glcanvas
 
-#try:
-#    import ctypes
-#    import mymcsup
-#    D3DXVECTOR3 = mymcsup.D3DXVECTOR3
-#    D3DXVECTOR4 = mymcsup.D3DXVECTOR4
-#    D3DXVECTOR4_ARRAY3 = mymcsup.D3DXVECTOR4_ARRAY3
-#
-#    def mkvec4arr3(l):
-#        return D3DXVECTOR4_ARRAY3(*[D3DXVECTOR4(*vec)
-#                        for vec in l])
-#except ImportError:
-#    mymcsup = None
-mcsup = None
+from OpenGL.GL import *
 
 
 lighting_none = {"lighting": False,
@@ -131,16 +120,27 @@ class IconWindow(wx.Window):
         win.Bind(wx.EVT_MENU, self.evt_menu_camera, id=IconWindow.ID_CMD_CAMERA_HIGH)
 
     def __init__(self, parent, focus):
+        super().__init__(parent)
         self.failed = False
-        wx.Window.__init__(self, parent)
-        #if mymcsup == None:
-        #    self.failed = True
-        #    return
-        #r = mymcsup.init_icon_renderer(focus.GetHandle(), self.GetHandle())
-        #if r == -1:
-        #    print("init_icon_renderer failed")
-        #    self.failed = True
-        #    return
+
+        attrib_list = [
+            glcanvas.WX_GL_MAJOR_VERSION, 3,
+            glcanvas.WX_GL_MINOR_VERSION, 2,
+            glcanvas.WX_GL_CORE_PROFILE,
+            glcanvas.WX_GL_RGBA,
+            glcanvas.WX_GL_DOUBLEBUFFER,
+            glcanvas.WX_GL_DEPTH_SIZE, 24
+        ]
+
+        self.sizer = wx.BoxSizer(wx.VERTICAL)
+
+        self.canvas = glcanvas.GLCanvas(self, attribList=attrib_list)
+        self.context = glcanvas.GLContext(self.canvas)
+
+        self.canvas.Bind(wx.EVT_PAINT, self.paint)
+
+        self.sizer.Add(self.canvas, wx.EXPAND, wx.EXPAND)
+        self.SetSizer(self.sizer)
 
         #self.config = config = mymcsup.icon_config()
         #config.animate = True
@@ -152,10 +152,13 @@ class IconWindow(wx.Window):
 
         self.Bind(wx.EVT_CONTEXT_MENU, self.evt_context_menu)
 
-    def __del__(self):
-        #if mymcsup != None:
-        #    mymcsup.delete_icon_renderer()
-        pass
+    def paint(self, event):
+        self.context.SetCurrent(self.canvas)
+
+        glClearColor(0.0, 1.0, 0.0, 1.0)
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
+
+        self.canvas.SwapBuffers()
 
     def update_menu(self, menu):
         """Update the content menu according to the current config."""
