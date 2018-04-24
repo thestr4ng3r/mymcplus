@@ -17,8 +17,6 @@
 
 """Manipulate PS2 memory card images."""
 
-_SCCS_ID = "@(#) mysc ps2mc.py 1.10 12/10/04 19:10:35\n"
-
 import sys
 import array
 import struct

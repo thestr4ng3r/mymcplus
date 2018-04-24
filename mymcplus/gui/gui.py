@@ -17,8 +17,6 @@
 
 """Graphical user-interface for mymcplus."""
 
-_SCCS_ID = "@(#) mymcplus gui.py 1.4 12/10/04 18:51:51\n"
-
 import os
 import sys
 import struct

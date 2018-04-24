@@ -22,8 +22,6 @@ a two level dicitionary look up during compression rather than
 LZARI.C's binary search tree.
 """
 
-_SCCS_ID = "@(#) mysc lzari.py 1.6 12/10/04 19:07:53\n"
-
 import sys
 import array
 import binascii

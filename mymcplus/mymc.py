@@ -17,8 +17,6 @@
 
 """A utility for manipulating PS2 memory card images."""
 
-_SCCS_ID = "@(#) mysc mymcplus.py 1.12 12/10/04 19:09:16\n"[:-1]
-
 import sys
 import os
 import optparse
@@ -718,8 +716,7 @@ def main(argv=sys.argv):
         
     version = ("mymcplus "
            + verbuild.MYMC_VERSION_MAJOR
-           + "." + verbuild.MYMC_VERSION_BUILD
-           + "   (" + _SCCS_ID + ")")
+           + "." + verbuild.MYMC_VERSION_BUILD)
 
     optparser = optparse.OptionParser(prog = prog, usage = usage,
                       description = description,
