@@ -15,6 +15,8 @@
 # along with mymc+.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+from array import array
+
 import wx
 from wx import glcanvas
 
@@ -71,6 +73,32 @@ camera_default = [0, 4, -8]
 camera_high = [0, 7, -6]
 camera_near = [0, 3, -6]
 camera_flat = [0, 2, -7.5]
+
+
+_glsl_vert = b"""
+#version 150
+
+in vec3 vertex_attr;
+
+void main()
+{
+    gl_Position = vec4(vertex_attr, 1.0);
+}
+"""
+
+_glsl_frag = b"""
+#version 150
+
+out vec4 color_out;
+
+void main()
+{
+    color_out = vec4(0.0, 1.0, 0.0, 1.0);
+}
+"""
+
+_ATTRIB_VERTEX_POS = 0
+
 
 class IconWindow(wx.Window):
     """Displays a save file's 3D icon."""
@@ -137,6 +165,11 @@ class IconWindow(wx.Window):
         self.canvas = glcanvas.GLCanvas(self, attribList=attrib_list)
         self.context = glcanvas.GLContext(self.canvas)
 
+        self.program = None
+        self.vbo = None
+        self.vao = None
+        self.gl_initialized = False
+
         self.canvas.Bind(wx.EVT_PAINT, self.paint)
 
         self.sizer.Add(self.canvas, wx.EXPAND, wx.EXPAND)
@@ -152,11 +185,65 @@ class IconWindow(wx.Window):
 
         self.Bind(wx.EVT_CONTEXT_MENU, self.evt_context_menu)
 
+
+    def initialize_gl(self):
+        self.gl_initialized = True
+
+        shader_vert = glCreateShader(GL_VERTEX_SHADER)
+        glShaderSource(shader_vert, [_glsl_vert])
+        glCompileShader(shader_vert)
+
+        shader_frag = glCreateShader(GL_FRAGMENT_SHADER)
+        glShaderSource(shader_frag, [_glsl_frag])
+        glCompileShader(shader_frag)
+
+        self.program = glCreateProgram()
+        glAttachShader(self.program, shader_vert)
+        glAttachShader(self.program, shader_frag)
+        glLinkProgram(self.program)
+
+        log = glGetProgramInfoLog(self.program)
+        if log:
+            print("Failed to compile shader:")
+            print(log.decode("utf-8"))
+            self.failed = True
+            return
+
+        glBindAttribLocation(self.program, _ATTRIB_VERTEX_POS, "vertex_in")
+
+
+        data = [
+            0.0, 0.5, 0.5,
+            -0.5, -0.5, 0.5,
+            0.5, -0.5, 0.5
+        ]
+
+        self.vao = glGenVertexArrays(1)
+        glBindVertexArray(self.vao)
+
+        self.vbo = glGenBuffers(1)
+        glBindBuffer(GL_ARRAY_BUFFER, self.vbo)
+        glBufferData(GL_ARRAY_BUFFER, len(data) * 4, (GLfloat * len(data))(*data), GL_STATIC_DRAW)
+        glVertexAttribPointer(_ATTRIB_VERTEX_POS, 3, GL_FLOAT, GL_FALSE, 0, None)
+
+        glEnableVertexAttribArray(_ATTRIB_VERTEX_POS)
+
+
     def paint(self, event):
         self.context.SetCurrent(self.canvas)
 
-        glClearColor(0.0, 1.0, 0.0, 1.0)
+        if not self.gl_initialized:
+            self.initialize_gl()
+
+        glViewport(0, 0, self.canvas.Size.Width, self.canvas.Size.Height)
+
+        glClearColor(1.0, 0.0, 0.0, 1.0)
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
+
+        glUseProgram(self.program)
+
+        glBindVertexArray(self.vao)
+        glDrawArrays(GL_TRIANGLES, 0, 3)
 
         self.canvas.SwapBuffers()
 
