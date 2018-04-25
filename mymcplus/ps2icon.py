@@ -18,7 +18,6 @@
 """Interface for working with PS2 icons."""
 
 import struct
-from array import array
 
 
 class Error(Exception):
@@ -40,6 +39,11 @@ _icon_hdr_struct = struct.Struct("<IIIII")
 
 _vertex_coords_struct = struct.Struct("<hhhH")
 _normal_uv_color_struct = struct.Struct("<hhhHhhBBBB")
+
+import ctypes
+uint8_t = ctypes.c_uint8
+int16_t = ctypes.c_int16
+
 
 def unpack_icon_hdr(s):
     return _icon_hdr_struct.unpack(s[:20])
@@ -67,19 +71,27 @@ class Icon:
         if length < _icon_hdr_struct.size + self.vertex_count * stride:
             raise Corrupt("File too small.")
 
-        self.vertex_data = array("f")
-        self.normal_uv_data = array("f")
-        self.color_data = array("B")
+        self.vertex_data = (int16_t * (3 * self.vertex_count))()
+        self.normal_uv_data = (int16_t * (5 * self.vertex_count))()
+        self.color_data = (uint8_t * (4 * self.vertex_count))()
 
         for i in range(self.vertex_count):
             offset = _icon_hdr_struct.size + i * stride
             d = data[offset:(offset + _vertex_coords_struct.size)]
-            (x, y, z, _) = _vertex_coords_struct.unpack(d)
+            (self.vertex_data[i*3],
+             self.vertex_data[i*3+1],
+             self.vertex_data[i*3+2],
+             _) = _vertex_coords_struct.unpack(d)
 
             offset += _vertex_coords_struct.size * self.animation_shapes
             d = data[offset:(offset + _normal_uv_color_struct.size)]
-            (nx, ny, nz, _, u, v, r, g, b, a) = _normal_uv_color_struct.unpack(d)
-
-            self.vertex_data.extend([x / _FIXED_POINT_FACTOR, y / _FIXED_POINT_FACTOR, z / _FIXED_POINT_FACTOR])
-            self.normal_uv_data.extend([nx, ny, nz, u, v])
-            self.color_data.extend([r, g, b, a])
+            (self.normal_uv_data[i*5],
+             self.normal_uv_data[i*5+1],
+             self.normal_uv_data[i*5+2],
+             _,
+             self.normal_uv_data[i*5+3],
+             self.normal_uv_data[i*5+4],
+             self.color_data[i*3],
+             self.color_data[i*3+1],
+             self.color_data[i*3+2],
+             self.color_data[i*3+3]) = _normal_uv_color_struct.unpack(d)
