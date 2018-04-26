@@ -25,7 +25,7 @@ class Error(Exception):
     pass
 
 class Corrupt(Error):
-    """Corrupt save file."""
+    """Corrupt icon file."""
 
     def __init__(self, msg):
         super().__init__(self, "Corrupt icon: " + msg)
@@ -35,32 +35,45 @@ _PS2_ICON_MAGIC = 0x010000
 
 _FIXED_POINT_FACTOR = 4096.0
 
+_TEXTURE_SIZE = 128*128*2
+
 _icon_hdr_struct = struct.Struct("<IIIII")
 
 _vertex_coords_struct = struct.Struct("<hhhH")
 _normal_uv_color_struct = struct.Struct("<hhhHhhBBBB")
+
+_anim_hdr_struct = struct.Struct("<IIfII")
+_frame_data_struct = struct.Struct("<IIII")
+_frame_key_struct = struct.Struct("<ff")
 
 import ctypes
 uint8_t = ctypes.c_uint8
 int16_t = ctypes.c_int16
 
 
-def unpack_icon_hdr(s):
-    return _icon_hdr_struct.unpack(s[:20])
-
-
-def pack_icon_hdr(icon):
-    return _icon_hdr_struct.pack(icon)
-
-
 class Icon:
+    class Frame:
+        class Key:
+            def __init__(self):
+                self.time = 0.0
+                self.value = 0.0
+        def __init__(self):
+            self.shape_id = 0
+            self.keys = []
+
+
     def __init__(self, data):
         length = len(data)
+        offset = 0
 
         if length < _icon_hdr_struct.size:
             raise Corrupt("File too small.")
 
-        (magic, self.animation_shapes, self.tex_type, _, self.vertex_count) = unpack_icon_hdr(data[:_icon_hdr_struct.size])
+        (magic,
+         self.animation_shapes,
+         self.tex_type,
+         _,
+         self.vertex_count) = _icon_hdr_struct.unpack_from(data, offset)
 
         if magic != _PS2_ICON_MAGIC:
             raise Corrupt("Invalid magic.")
@@ -68,7 +81,9 @@ class Icon:
         stride = _vertex_coords_struct.size * self.animation_shapes \
                  + _normal_uv_color_struct.size
 
-        if length < _icon_hdr_struct.size + self.vertex_count * stride:
+        offset += _icon_hdr_struct.size
+
+        if length < offset + self.vertex_count * stride:
             raise Corrupt("File too small.")
 
         self.vertex_data = (int16_t * (3 * self.vertex_count))()
@@ -76,15 +91,15 @@ class Icon:
         self.color_data = (uint8_t * (4 * self.vertex_count))()
 
         for i in range(self.vertex_count):
-            offset = _icon_hdr_struct.size + i * stride
-            d = data[offset:(offset + _vertex_coords_struct.size)]
             (self.vertex_data[i*3],
              self.vertex_data[i*3+1],
              self.vertex_data[i*3+2],
-             _) = _vertex_coords_struct.unpack(d)
+             _) = _vertex_coords_struct.unpack_from(data, offset)
+
+            # TODO: read all shapes
 
             offset += _vertex_coords_struct.size * self.animation_shapes
-            d = data[offset:(offset + _normal_uv_color_struct.size)]
+
             (self.normal_uv_data[i*5],
              self.normal_uv_data[i*5+1],
              self.normal_uv_data[i*5+2],
@@ -94,4 +109,60 @@ class Icon:
              self.color_data[i*3],
              self.color_data[i*3+1],
              self.color_data[i*3+2],
-             self.color_data[i*3+3]) = _normal_uv_color_struct.unpack(d)
+             self.color_data[i*3+3]) = _normal_uv_color_struct.unpack_from(data, offset)
+
+            offset += _normal_uv_color_struct.size
+
+        if length < offset + _anim_hdr_struct.size:
+            raise Corrupt("File too small.")
+
+        (anim_id_tag,
+         self.frame_length,
+         self.anim_speed,
+         self.play_offset,
+         self.frame_count) = _anim_hdr_struct.unpack_from(data, offset)
+
+        offset += _anim_hdr_struct.size
+
+        if anim_id_tag != 0x01:
+            raise Corrupt("Invalid ID tag in animation header: {:#x}".format(anim_id_tag))
+
+        self.frames = []
+        for i in range(self.frame_count):
+            if length < offset + _frame_data_struct.size:
+                raise Corrupt("File too small.")
+
+            frame = self.Frame()
+            (frame.shape_id,
+             key_count,
+             _,
+             _) = _frame_data_struct.unpack_from(data, offset)
+
+            key_count -= 1 # TODO: why? see https://github.com/ticky/ps2icon/blob/25f5daa4b4e8c77ef86f81470308cffd659228b5/ps2icon.c#L145
+
+            offset += _frame_data_struct.size
+
+            for k in range(key_count):
+                if length < offset + _frame_key_struct.size:
+                    raise Corrupt("File too small.")
+
+                key = self.Frame.Key()
+                (key.time,
+                 key.value) = _frame_key_struct.unpack_from(data, offset)
+                frame.keys.append(key)
+
+                offset += _frame_key_struct.size
+
+            self.frames.append(frame)
+
+        self.texture = None
+
+        if self.tex_type == 0x7: # uncompressed
+            if length < offset + _TEXTURE_SIZE:
+                raise Corrupt("File too small.")
+            elif length > length < offset + _TEXTURE_SIZE:
+                print("Warning: Icon file larger than expected.")
+
+            self.texture = data[offset:(offset + _TEXTURE_SIZE)]
+        else:
+            print("Warning: Loading uncompressed textures not supported yet.")

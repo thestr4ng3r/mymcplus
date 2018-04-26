@@ -86,11 +86,14 @@ uniform mat4 mvp_matrix_uni;
 in vec3 vertex_attr;
 in vec3 normal_attr;
 in vec2 uv_attr;
-in vec3 color_attr;
+in vec4 color_attr;
+
+out vec4 color_var;
 
 void main()
 {
     vec3 pos = vertex_attr / 4096.0;
+    color_var = color_attr;
     gl_Position = mvp_matrix_uni * vec4(pos, 1.0);
 }
 """
@@ -98,11 +101,13 @@ void main()
 _glsl_frag = b"""
 #version 150
 
+in vec4 color_var;
+
 out vec4 color_out;
 
 void main()
 {
-    color_out = vec4(0.0, 1.0, 0.0, 1.0);
+    color_out = color_var;
 }
 """
 
@@ -313,20 +318,20 @@ class IconWindow(wx.Window):
 
     def _load_icon_gl(self):
         glBindBuffer(GL_ARRAY_BUFFER, self._vertex_vbo)
-        glBufferData(GL_ARRAY_BUFFER, self._icon.vertex_count * 3 * 2,
-                     #(GLfloat * (self._icon.vertex_count * 3))(*self._icon.vertex_data),
+        glBufferData(GL_ARRAY_BUFFER,
+                     self._icon.vertex_count * 3 * 2,
                      self._icon.vertex_data,
                      GL_STATIC_DRAW)
 
         glBindBuffer(GL_ARRAY_BUFFER, self._normal_uv_vbo)
-        glBufferData(GL_ARRAY_BUFFER, self._icon.vertex_count * 5 * 2,
-                     #(GLfloat * (self._icon.vertex_count * 5))(*self._icon.normal_uv_data),
+        glBufferData(GL_ARRAY_BUFFER,
+                     self._icon.vertex_count * 5 * 2,
                      self._icon.normal_uv_data,
                      GL_STATIC_DRAW)
 
         glBindBuffer(GL_ARRAY_BUFFER, self._color_vbo)
-        glBufferData(GL_ARRAY_BUFFER, self._icon.vertex_count * 4,
-                     #(GLfloat * (self._icon.vertex_count * 4))(*self._icon.color_data),
+        glBufferData(GL_ARRAY_BUFFER,
+                     self._icon.vertex_count * 4,
                      self._icon.color_data,
                      GL_STATIC_DRAW)
 
