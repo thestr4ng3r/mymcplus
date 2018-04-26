@@ -19,6 +19,8 @@ from ctypes import c_void_p
 from OpenGL.GL import *
 from .linalg import Matrix4x4, Vector3
 
+from ..ps2icon import TEXTURE_WIDTH, TEXTURE_HEIGHT
+
 
 _glsl_vert = b"""
 #version 150
@@ -31,11 +33,13 @@ in vec2 uv_attr;
 in vec4 color_attr;
 
 out vec4 color_var;
+out vec2 uv_var;
 
 void main()
 {
     vec3 pos = vertex_attr / 4096.0;
     color_var = color_attr;
+    uv_var = uv_attr / 4096.0;
     gl_Position = mvp_matrix_uni * vec4(pos, 1.0);
 }
 """
@@ -43,13 +47,17 @@ void main()
 _glsl_frag = b"""
 #version 150
 
+uniform sampler2D texture_uni;
+
 in vec4 color_var;
+in vec2 uv_var;
 
 out vec4 color_out;
 
 void main()
 {
-    color_out = color_var;
+    vec3 tex_color = texture(texture_uni, uv_var).rgb;
+    color_out = color_var * vec4(tex_color, 1.0);
 }
 """
 
@@ -57,6 +65,8 @@ _ATTRIB_VERTEX =    0
 _ATTRIB_NORMAL =    1
 _ATTRIB_UV =        2
 _ATTRIB_COLOR =     3
+
+_TEX_UNIT =         0
 
 
 class IconRenderer:
@@ -74,6 +84,7 @@ class IconRenderer:
         self._normal_uv_vbo = None
         self._color_vbo = None
         self._vao = None
+        self._texture = None
         self._mvp_matrix_uni = -1
         self._gl_initialized = False
 
@@ -91,10 +102,10 @@ class IconRenderer:
 
         self._program = glCreateProgram()
 
-        glBindAttribLocation(self._program, _ATTRIB_VERTEX, "vertex_in")
-        glBindAttribLocation(self._program, _ATTRIB_NORMAL, "normal_in")
-        glBindAttribLocation(self._program, _ATTRIB_UV, "uv_in")
-        glBindAttribLocation(self._program, _ATTRIB_COLOR, "color_in")
+        glBindAttribLocation(self._program, _ATTRIB_VERTEX, "vertex_attr")
+        glBindAttribLocation(self._program, _ATTRIB_NORMAL, "normal_attr")
+        glBindAttribLocation(self._program, _ATTRIB_UV, "uv_attr")
+        glBindAttribLocation(self._program, _ATTRIB_COLOR, "color_attr")
 
         glAttachShader(self._program, shader_vert)
         glAttachShader(self._program, shader_frag)
@@ -108,6 +119,10 @@ class IconRenderer:
             return
 
         self._mvp_matrix_uni = glGetUniformLocation(self._program, "mvp_matrix_uni")
+
+        texture_uni = glGetUniformLocation(self._program, "texture_uni")
+        glUseProgram(self._program)
+        glUniform1i(texture_uni, _TEX_UNIT)
 
         self._vao = glGenVertexArrays(1)
         glBindVertexArray(self._vao)
@@ -129,12 +144,24 @@ class IconRenderer:
         glEnableVertexAttribArray(_ATTRIB_UV)
         glEnableVertexAttribArray(_ATTRIB_COLOR)
 
+        self._texture = glGenTextures(1)
+        glBindTexture(GL_TEXTURE_2D, self._texture)
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR)
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR)
+        glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE)
+        glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE)
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE)
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB5_A1, TEXTURE_WIDTH, TEXTURE_HEIGHT, 0, GL_RGBA, GL_UNSIGNED_SHORT_1_5_5_5_REV, c_void_p(0))
+
 
     def paint(self, canvas):
         self.context.SetCurrent(canvas)
 
         if not self._gl_initialized:
             self.initialize_gl()
+
+        if self.failed:
+            return
 
         size = canvas.Size
 
@@ -145,6 +172,11 @@ class IconRenderer:
 
         if self._icon is not None:
             glUseProgram(self._program)
+
+            glEnable(GL_DEPTH_TEST)
+
+            glActiveTexture(GL_TEXTURE0 + _TEX_UNIT)
+            glBindTexture(GL_TEXTURE_2D, self._texture)
 
             modelview_matrix = Matrix4x4.look_at(Vector3(0.0, 2.5, 4.0), Vector3(0.0, 2.5, 0.0), Vector3(0.0, -1.0, 0.0))
             projection_matrix = Matrix4x4.perspective(80.0, float(size.Width) / float(size.Height), 0.1, 500.0)
@@ -159,6 +191,9 @@ class IconRenderer:
 
 
     def set_icon(self, icon):
+        if self.failed:
+            return
+
         self._icon = icon
         if icon is None:
             return
@@ -180,6 +215,11 @@ class IconRenderer:
                      self._icon.vertex_count * 4,
                      self._icon.color_data,
                      GL_STATIC_DRAW)
+
+        glBindTexture(GL_TEXTURE_2D, self._texture)
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB5_A1, TEXTURE_WIDTH, TEXTURE_HEIGHT, 0, GL_RGBA, GL_UNSIGNED_SHORT_1_5_5_5_REV, self._icon.texture)
+        glGenerateMipmap(GL_TEXTURE_2D)
+
 
 
 

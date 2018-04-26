@@ -35,7 +35,11 @@ _PS2_ICON_MAGIC = 0x010000
 
 _FIXED_POINT_FACTOR = 4096.0
 
-_TEXTURE_SIZE = 128*128*2
+
+TEXTURE_WIDTH = 128
+TEXTURE_HEIGHT = 128
+
+_TEXTURE_SIZE = TEXTURE_WIDTH * TEXTURE_HEIGHT * 2
 
 _icon_hdr_struct = struct.Struct("<IIIII")
 
@@ -106,10 +110,10 @@ class Icon:
              _,
              self.normal_uv_data[i*5+3],
              self.normal_uv_data[i*5+4],
-             self.color_data[i*3],
-             self.color_data[i*3+1],
-             self.color_data[i*3+2],
-             self.color_data[i*3+3]) = _normal_uv_color_struct.unpack_from(data, offset)
+             self.color_data[i*4],
+             self.color_data[i*4+1],
+             self.color_data[i*4+2],
+             self.color_data[i*4+3]) = _normal_uv_color_struct.unpack_from(data, offset)
 
             offset += _normal_uv_color_struct.size
 
@@ -166,3 +170,4 @@ class Icon:
             self.texture = data[offset:(offset + _TEXTURE_SIZE)]
         else:
             print("Warning: Loading uncompressed textures not supported yet.")
+
