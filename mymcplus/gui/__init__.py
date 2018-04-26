@@ -19,6 +19,7 @@ __all__ = [
     "dirlist_control",
     "gui",
     "icon_window",
+    "icon_renderer",
     "linalg",
     "resources",
     "utils",
