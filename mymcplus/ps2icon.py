@@ -67,9 +67,31 @@ class Icon:
 
 
     def __init__(self, data):
+        self.animation_shapes = 0
+        self.tex_type = 0
+        self.vertex_count = 0
+        self.vertex_data = None
+        self.normal_uv_data = None
+        self.color_data = None
+        self.frame_length = 0
+        self.anim_speed = 0.0
+        self.play_offset = 0
+        self.frame_count = 0
+        self.texture = None
+
         length = len(data)
         offset = 0
 
+        offset = self.__load_header(data, length, offset)
+        offset = self.__load_vertex_data(data, length, offset)
+        offset = self.__load_animation_data(data, length, offset)
+        offset = self.__load_texture(data, length, offset)
+
+        if length > offset:
+            print("Warning: Icon file larger than expected.")
+
+
+    def __load_header(self, data, length, offset):
         if length < _icon_hdr_struct.size:
             raise Corrupt("File too small.")
 
@@ -82,10 +104,12 @@ class Icon:
         if magic != _PS2_ICON_MAGIC:
             raise Corrupt("Invalid magic.")
 
+        return offset + _icon_hdr_struct.size
+
+
+    def __load_vertex_data(self, data, length, offset):
         stride = _vertex_coords_struct.size * self.animation_shapes \
                  + _normal_uv_color_struct.size
-
-        offset += _icon_hdr_struct.size
 
         if length < offset + self.vertex_count * stride:
             raise Corrupt("File too small.")
@@ -117,6 +141,10 @@ class Icon:
 
             offset += _normal_uv_color_struct.size
 
+        return offset
+
+
+    def __load_animation_data(self, data, length, offset):
         if length < offset + _anim_hdr_struct.size:
             raise Corrupt("File too small.")
 
@@ -159,15 +187,17 @@ class Icon:
 
             self.frames.append(frame)
 
-        self.texture = None
+        return offset
 
+
+    def __load_texture(self, data, length, offset):
         if self.tex_type == 0x7: # uncompressed
             if length < offset + _TEXTURE_SIZE:
                 raise Corrupt("File too small.")
-            elif length > length < offset + _TEXTURE_SIZE:
-                print("Warning: Icon file larger than expected.")
 
             self.texture = data[offset:(offset + _TEXTURE_SIZE)]
+            offset += _TEXTURE_SIZE
         else:
             print("Warning: Loading uncompressed textures not supported yet.")
 
+        return offset
