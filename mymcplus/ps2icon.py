@@ -30,6 +30,12 @@ class Corrupt(Error):
     def __init__(self, msg):
         super().__init__(self, "Corrupt icon: " + msg)
 
+class FileTooSmall(Error):
+    """Corrupt icon file."""
+
+    def __init__(self):
+        super().__init__(self, "Icon file too small.")
+
 
 _PS2_ICON_MAGIC = 0x010000
 
@@ -49,6 +55,8 @@ _normal_uv_color_struct = struct.Struct("<hhhHhhBBBB")
 _anim_hdr_struct = struct.Struct("<IIfII")
 _frame_data_struct = struct.Struct("<IIII")
 _frame_key_struct = struct.Struct("<ff")
+
+_texture_compressed_size_struct = struct.Struct("<I")
 
 import ctypes
 uint8_t = ctypes.c_uint8
@@ -93,7 +101,7 @@ class Icon:
 
     def __load_header(self, data, length, offset):
         if length < _icon_hdr_struct.size:
-            raise Corrupt("File too small.")
+            raise FileTooSmall()
 
         (magic,
          self.animation_shapes,
@@ -112,7 +120,7 @@ class Icon:
                  + _normal_uv_color_struct.size
 
         if length < offset + self.vertex_count * stride:
-            raise Corrupt("File too small.")
+            raise FileTooSmall()
 
         self.vertex_data = (int16_t * (3 * self.vertex_count))()
         self.normal_uv_data = (int16_t * (5 * self.vertex_count))()
@@ -146,7 +154,7 @@ class Icon:
 
     def __load_animation_data(self, data, length, offset):
         if length < offset + _anim_hdr_struct.size:
-            raise Corrupt("File too small.")
+            raise FileTooSmall()
 
         (anim_id_tag,
          self.frame_length,
@@ -162,7 +170,7 @@ class Icon:
         self.frames = []
         for i in range(self.frame_count):
             if length < offset + _frame_data_struct.size:
-                raise Corrupt("File too small.")
+                raise FileTooSmall()
 
             frame = self.Frame()
             (frame.shape_id,
@@ -170,13 +178,13 @@ class Icon:
              _,
              _) = _frame_data_struct.unpack_from(data, offset)
 
-            key_count -= 1 # TODO: why? see https://github.com/ticky/ps2icon/blob/25f5daa4b4e8c77ef86f81470308cffd659228b5/ps2icon.c#L145
+            key_count -= 1
 
             offset += _frame_data_struct.size
 
             for k in range(key_count):
                 if length < offset + _frame_key_struct.size:
-                    raise Corrupt("File too small.")
+                    raise FileTooSmall()
 
                 key = self.Frame.Key()
                 (key.time,
@@ -191,13 +199,72 @@ class Icon:
 
 
     def __load_texture(self, data, length, offset):
-        if self.tex_type == 0x7: # uncompressed
-            if length < offset + _TEXTURE_SIZE:
-                raise Corrupt("File too small.")
-
-            self.texture = data[offset:(offset + _TEXTURE_SIZE)]
-            offset += _TEXTURE_SIZE
+        if self.tex_type == 0x7:
+            return self.__load_texture_uncompressed(data, length, offset)
         else:
-            print("Warning: Loading uncompressed textures not supported yet.")
+            return self.__load_texture_compressed(data, length, offset)
 
-        return offset
+
+    def __load_texture_uncompressed(self, data, length, offset):
+        if length < offset + _TEXTURE_SIZE:
+            raise FileTooSmall()
+
+        self.texture = data[offset:(offset + _TEXTURE_SIZE)]
+
+        return offset + _TEXTURE_SIZE
+
+
+    def __load_texture_compressed(self, data, length, offset):
+        if length < offset + 4:
+            raise FileTooSmall()
+
+        compressed_size = _texture_compressed_size_struct.unpack_from(data, offset)[0]
+        offset += 4
+
+        if length < offset + compressed_size:
+            raise FileTooSmall()
+
+        if compressed_size % 2 != 0:
+            raise Corrupt("Compressed data size is odd.")
+
+        texture_buf = bytearray(_TEXTURE_SIZE)
+
+        tex_offset = 0
+        rle_offset = 0
+
+        while rle_offset < compressed_size:
+            rle_code = int(data[offset + rle_offset]) | (int(data[offset + rle_offset + 1]) << 8)
+            rle_offset += 2
+
+            if rle_code & 0xff00 == 0xff00: # use the next (0xffff - rle_code) * 2 bytes as they are
+                sublength = (0x10000 - rle_code) * 2
+                if compressed_size < rle_offset + sublength:
+                    raise Corrupt("Compressed data is too short.")
+                if tex_offset + sublength > _TEXTURE_SIZE:
+                    raise Corrupt("Decompressed data exceeds texture size.")
+
+                for i in range(sublength):
+                    texture_buf[tex_offset] = data[offset + rle_offset]
+                    tex_offset += 1
+                    rle_offset += 1
+
+            else: # repeat next 2 bytes rle_code times
+                rep = rle_code
+                if compressed_size < rle_offset + 2:
+                    raise Corrupt("Compressed data is too short.")
+                if tex_offset + rep * 2 > _TEXTURE_SIZE:
+                    raise Corrupt("Decompressed data exceeds texture size.")
+
+                subdata = data[(offset + rle_offset):(offset + rle_offset + 2)]
+                rle_offset += 2
+
+                for i in range(rep):
+                    texture_buf[tex_offset] = subdata[0]
+                    texture_buf[tex_offset+1] = subdata[1]
+                    tex_offset += 2
+
+        assert rle_offset == compressed_size
+
+        self.texture = bytes(texture_buf)
+
+        return offset + compressed_size
