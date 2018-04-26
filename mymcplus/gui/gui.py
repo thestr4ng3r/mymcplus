@@ -62,9 +62,16 @@ class GuiConfig(wx.Config):
     def set_ascii(self, value):
         return self.WriteInt(GuiConfig.ascii, int(bool(value)))
 
-def add_tool(toolbar, id, label, ico):
-    tbsize = toolbar.GetToolBitmapSize()
-    bmp = utils.get_icon_resource_bmp(ico, tbsize)
+def add_tool(toolbar, id, label, standard_art, ico):
+    bmp = wx.NullBitmap
+
+    if standard_art is not None:
+        bmp = wx.ArtProvider.GetBitmap(standard_art, wx.ART_TOOLBAR)
+
+    if bmp == wx.NullBitmap:
+        tbsize = toolbar.GetToolBitmapSize()
+        bmp = utils.get_icon_resource_bmp(ico, tbsize)
+
     return toolbar.AddTool(id, label, bmp, shortHelp = label)
 
 class GuiFrame(wx.Frame):
@@ -124,24 +131,16 @@ class GuiFrame(wx.Frame):
         self.Bind(wx.EVT_MENU, self.evt_cmd_ascii, id=self.ID_CMD_ASCII)
         
         filemenu = wx.Menu()
-        filemenu.Append(self.ID_CMD_OPEN, "&Open...",
-                "Opens an existing PS2 memory card image.")
+        filemenu.Append(self.ID_CMD_OPEN, "&Open...", "Opens an existing PS2 memory card image.")
         filemenu.AppendSeparator()
-        self.export_menu_item = filemenu.Append(
-            self.ID_CMD_EXPORT, "&Export...",
-            "Export a save file from this image.")
-        self.import_menu_item = filemenu.Append(
-            self.ID_CMD_IMPORT, "&Import...",
-            "Import a save file into this image.")
-        self.delete_menu_item = filemenu.Append(
-            self.ID_CMD_DELETE, "&Delete")
+        self.export_menu_item = filemenu.Append(self.ID_CMD_EXPORT, "&Export...", "Export a save file from this image.")
+        self.import_menu_item = filemenu.Append(self.ID_CMD_IMPORT, "&Import...", "Import a save file into this image.")
+        self.delete_menu_item = filemenu.Append(self.ID_CMD_DELETE, "&Delete")
         filemenu.AppendSeparator()
         filemenu.Append(self.ID_CMD_EXIT, "E&xit")
 
         optionmenu = wx.Menu()
-        self.ascii_menu_item = optionmenu.AppendCheckItem(
-            self.ID_CMD_ASCII, "&ASCII Descriptions",
-            "Show descriptions in ASCII instead of Shift-JIS")
+        self.ascii_menu_item = optionmenu.AppendCheckItem(self.ID_CMD_ASCII, "&ASCII Descriptions", "Show descriptions in ASCII instead of Shift-JIS")
 
 
         self.Bind(wx.EVT_MENU_OPEN, self.evt_menu_open)
@@ -150,10 +149,10 @@ class GuiFrame(wx.Frame):
         self.toolbar = toolbar = self.GetToolBar()
         tbsize = (32, 32)
         toolbar.SetToolBitmapSize(tbsize)
-        add_tool(toolbar, self.ID_CMD_OPEN, "Open", "mc2.ico")
+        add_tool(toolbar, self.ID_CMD_OPEN, "Open", wx.ART_FILE_OPEN, "mc2.ico")
         toolbar.AddSeparator()
-        add_tool(toolbar, self.ID_CMD_IMPORT, "Import", "mc5b.ico")
-        add_tool(toolbar, self.ID_CMD_EXPORT, "Export", "mc6a.ico")
+        add_tool(toolbar, self.ID_CMD_IMPORT, "Import", None, "mc5b.ico")
+        add_tool(toolbar, self.ID_CMD_EXPORT, "Export", None, "mc6a.ico")
         toolbar.Realize()
 
         self.statusbar = self.CreateStatusBar(2,
