@@ -40,7 +40,7 @@ class GuiConfig(wx.Config):
     memcard_dir = "Memory Card Directory"
     savefile_dir = "Save File Directory"
     ascii = "ASCII Descriptions"
-    
+
     def __init__(self):
         wx.Config.__init__(self, "mymc+", style = wx.CONFIG_USE_LOCAL_FILE)
 
@@ -62,6 +62,7 @@ class GuiConfig(wx.Config):
     def set_ascii(self, value):
         return self.WriteInt(GuiConfig.ascii, int(bool(value)))
 
+
 def add_tool(toolbar, id, label, standard_art, ico):
     bmp = wx.NullBitmap
 
@@ -74,23 +75,24 @@ def add_tool(toolbar, id, label, standard_art, ico):
 
     return toolbar.AddTool(id, label, bmp, shortHelp = label)
 
+
 class GuiFrame(wx.Frame):
     """The main top level window."""
-    
+
     ID_CMD_EXIT = wx.ID_EXIT
     ID_CMD_OPEN = wx.ID_OPEN
     ID_CMD_EXPORT = 103
     ID_CMD_IMPORT = 104
     ID_CMD_DELETE = wx.ID_DELETE
     ID_CMD_ASCII = 106
-    
+
     def message_box(self, message, caption = "mymcplus", style = wx.OK,
             x = -1, y = -1):
         return wx.MessageBox(message, caption, style, self, x, y)
 
     def error_box(self, msg):
         return self.message_box(msg, "Error", wx.OK | wx.ICON_ERROR)
-        
+
     def mc_error(self, value, filename = None):
         """Display a message box for EnvironmentError exeception."""
 
@@ -100,11 +102,11 @@ class GuiFrame(wx.Frame):
             filename = self.mcname
         if filename == None:
             filename = "???"
-                    
+
         strerror = getattr(value, "strerror", None)
         if strerror == None:
             strerror = "unknown error"
-            
+
         return self.error_box(filename + ": " + strerror)
 
     def __init__(self, parent, title, mcname = None):
@@ -113,7 +115,7 @@ class GuiFrame(wx.Frame):
         self.mcname = None
         self.icon_win = None
 
-        size = (750, 350)
+        size = (800, 400)
         wx.Frame.__init__(self, parent, wx.ID_ANY, title, size = size)
 
         self.Bind(wx.EVT_CLOSE, self.evt_close)
@@ -122,14 +124,14 @@ class GuiFrame(wx.Frame):
         self.title = title
 
         self.SetIcons(utils.get_icon_resource("mc4.ico"))
-                
+
         self.Bind(wx.EVT_MENU, self.evt_cmd_exit, id=self.ID_CMD_EXIT)
         self.Bind(wx.EVT_MENU, self.evt_cmd_open, id=self.ID_CMD_OPEN)
         self.Bind(wx.EVT_MENU, self.evt_cmd_export, id=self.ID_CMD_EXPORT)
         self.Bind(wx.EVT_MENU, self.evt_cmd_import, id=self.ID_CMD_IMPORT)
         self.Bind(wx.EVT_MENU, self.evt_cmd_delete, id=self.ID_CMD_DELETE)
         self.Bind(wx.EVT_MENU, self.evt_cmd_ascii, id=self.ID_CMD_ASCII)
-        
+
         filemenu = wx.Menu()
         filemenu.Append(self.ID_CMD_OPEN, "&Open...", "Opens an existing PS2 memory card image.")
         filemenu.AppendSeparator()
@@ -155,44 +157,53 @@ class GuiFrame(wx.Frame):
         add_tool(toolbar, self.ID_CMD_EXPORT, "Export", None, "mc6a.ico")
         toolbar.Realize()
 
-        self.statusbar = self.CreateStatusBar(2,
-                              style = wx.STB_SIZEGRIP)
+        self.statusbar = self.CreateStatusBar(2, style=wx.STB_SIZEGRIP)
         self.statusbar.SetStatusWidths([-2, -1])
-        
-        panel = wx.Panel(self, wx.ID_ANY, (0, 0))
 
-        self.dirlist = DirListControl(panel,
+        panel = wx.Panel(self, wx.ID_ANY, (0, 0))
+        sizer = wx.BoxSizer(wx.HORIZONTAL)
+        sizer.Add(panel, wx.EXPAND, wx.EXPAND)
+        self.SetSizer(sizer)
+
+        splitter_window = wx.SplitterWindow(panel, style=wx.SP_LIVE_UPDATE)
+        splitter_window.SetSashGravity(0.5)
+
+        self.dirlist = DirListControl(splitter_window,
                                       self.evt_dirlist_item_focused,
                                       self.evt_dirlist_select,
                                       self.config)
-        if mcname != None:
+
+        if mcname is not None:
             self.open_mc(mcname)
         else:
             self.refresh()
 
-        sizer = wx.BoxSizer(wx.HORIZONTAL)
-        sizer.Add(self.dirlist, 2, wx.EXPAND)
-        sizer.AddSpacer(5)
+        panel_sizer = wx.BoxSizer(wx.HORIZONTAL)
+        panel_sizer.Add(splitter_window, wx.EXPAND, wx.EXPAND)
+        panel.SetSizer(panel_sizer)
 
-        icon_win = IconWindow(panel, self)
+        info_win = wx.Window(splitter_window)
+        icon_win = IconWindow(info_win, self)
         if icon_win.failed:
+            info_win.Destroy()
+            info_win = None
             icon_win.Destroy()
             icon_win = None
+        self.info_win = info_win
         self.icon_win = icon_win
-        
-        if icon_win == None:
+
+        if icon_win is None:
             self.info1 = None
             self.info2 = None
+            splitter_window.Initialize(self.dirlist)
         else:
             self.icon_menu = icon_menu = wx.Menu()
             icon_win.append_menu_options(self, icon_menu)
             optionmenu.AppendSubMenu(icon_menu, "Icon Window")
-            title_style =  wx.ALIGN_RIGHT | wx.ST_NO_AUTORESIZE
-            
-            self.info1 = wx.StaticText(panel, -1, "",
-                           style = title_style)
-            self.info2 = wx.StaticText(panel, -1, "",
-                           style = title_style)
+            title_style = wx.ALIGN_RIGHT | wx.ST_NO_AUTORESIZE
+
+            self.info1 = wx.StaticText(info_win, -1, "", style=title_style)
+            self.info2 = wx.StaticText(info_win, -1, "", style=title_style)
             # self.info3 = wx.StaticText(panel, -1, "")
 
             info_sizer = wx.BoxSizer(wx.VERTICAL)
@@ -201,19 +212,14 @@ class GuiFrame(wx.Frame):
             # info_sizer.Add(self.info3, 0, wx.EXPAND)
             info_sizer.AddSpacer(5)
             info_sizer.Add(icon_win, 1, wx.EXPAND)
+            info_win.SetSizer(info_sizer)
 
-            sizer.Add(info_sizer, 1, wx.EXPAND | wx.ALL,
-                  border = 5)
+            splitter_window.SplitVertically(self.dirlist, info_win, int(self.Size.Width * 0.7))
 
         menubar = wx.MenuBar()
         menubar.Append(filemenu, "&File")
         menubar.Append(optionmenu, "&Options")
         self.SetMenuBar(menubar)
-
-        
-        panel.SetSizer(sizer)
-        panel.SetAutoLayout(True)
-        sizer.Fit(panel)
 
         self.Show(True)
 
@@ -234,7 +240,7 @@ class GuiFrame(wx.Frame):
                 self.mc_error(value)
             self.f = None
         self.mcname = None
-        
+
     def refresh(self):
         try:
             self.dirlist.update(self.mc)
@@ -244,7 +250,7 @@ class GuiFrame(wx.Frame):
             self.dirlist.update(None)
 
         mc = self.mc
-        
+
         self.toolbar.EnableTool(self.ID_CMD_IMPORT, mc != None)
         self.toolbar.EnableTool(self.ID_CMD_EXPORT, False)
 
@@ -261,7 +267,7 @@ class GuiFrame(wx.Frame):
         self.statusbar.SetStatusText("", 1)
         if self.icon_win != None:
             self.icon_win.load_icon(None, None)
-        
+
         f = None
         try:
             f = open(filename, "r+b")
@@ -342,7 +348,7 @@ class GuiFrame(wx.Frame):
         mc = self.mc
         if mc == None:
             return
-        
+
         selected = self.dirlist.selected
         dirtable = self.dirlist.dirtable
         sfiles = []
@@ -357,7 +363,7 @@ class GuiFrame(wx.Frame):
 
         if len(sfiles) == 0:
             return
-        
+
         dir = self.config.get_savefile_dir("")
         if len(selected) == 1:
             (dirname, sf, longname) = sfiles[0]
@@ -390,7 +396,7 @@ class GuiFrame(wx.Frame):
 
             self.message_box("Exported " + fn + " successfully.")
             return
-        
+
         dir = wx.DirSelector("Export Save Files", dir, parent = self)
         if dir == "":
             return
@@ -409,7 +415,7 @@ class GuiFrame(wx.Frame):
                 self.config.set_savefile_dir(dir)
             self.message_box("Exported %d file(s) successfully."
                      % count)
-            
+
 
     def _do_import(self, fn):
         sf = ps2save.ps2_save_file()
@@ -438,11 +444,11 @@ class GuiFrame(wx.Frame):
 
         if not self.mc.import_save_file(sf, True):
             self.error_box(fn + ": Save file already present.")
-        
+
     def evt_cmd_import(self, event):
         if self.mc == None:
             return
-        
+
         dir = self.config.get_savefile_dir("")
         fd = wx.FileDialog(self, "Import Save File", dir,
                    wildcard = ("PS2 save files"
@@ -475,7 +481,7 @@ class GuiFrame(wx.Frame):
         mc = self.mc
         if mc == None:
             return
-        
+
         selected = self.dirlist.selected
         dirtable = self.dirlist.dirtable
 
@@ -507,21 +513,21 @@ class GuiFrame(wx.Frame):
     def evt_cmd_ascii(self, event):
         self.config.set_ascii(not self.config.get_ascii())
         self.refresh()
-        
+
     def evt_cmd_exit(self, event):
         self.Close(True)
 
     def evt_close(self, event):
         self._close_mc()
         self.Destroy()
-        
+
 def run(filename = None):
     """Display a GUI for working with memory card images."""
 
     wx_app = wx.App()
     frame = GuiFrame(None, "mymc+", filename)
     return wx_app.MainLoop()
-    
+
 if __name__ == "__main__":
     import gc
     gc.set_debug(gc.DEBUG_LEAK)
