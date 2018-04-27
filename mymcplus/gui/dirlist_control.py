@@ -18,7 +18,7 @@
 import wx
 
 from .. import ps2mc
-from .. import ps2save
+from ..save import ps2save
 
 from . import utils
 

@@ -24,8 +24,9 @@ import textwrap
 from errno import EEXIST, EIO
 
 from . import ps2mc
-from . import ps2save
+from .save import ps2save
 from .ps2mc_dir import *
+from .save import codebreaker, ems, max_drive, sharkport
 from . import verbuild
 
 class subopt_error(Exception):
@@ -211,28 +212,24 @@ def do_import(cmd, mc, opts, args, opterr):
             ftype = ps2save.detect_file_type(f)
             f.seek(0)
             if ftype == "max":
-                sf.load_max_drive(f)
+                max_drive.load(sf, f)
             elif ftype == "psu":
-                sf.load_ems(f)
+                ems.load(sf, f)
             elif ftype == "cbs":
-                sf.load_codebreaker(f)
+                codebreaker.load(sf, f)
             elif ftype == "sps":
-                sf.load_sharkport(f)
+                sharkport.load(sf, f)
             elif ftype == "npo":
-                raise io_error(EIO, "nPort saves"
-                         " are not supported.",
-                         filename)
+                raise io_error(EIO, "nPort saves are not supported.", filename)
             else:
-                raise io_error(EIO, "Save file format not"
-                         " recognized", filename)
+                raise io_error(EIO, "Save file format not recognized", filename)
         finally:
             f.close()
         dirname = opts.directory
         if dirname == None:
             dirname = sf.get_directory()[8].decode("ascii")
         print("Importing", filename, "to", dirname)
-        if not mc.import_save_file(sf, opts.ignore_existing,
-                        opts.directory):
+        if not mc.import_save_file(sf, opts.ignore_existing, opts.directory):
             print (filename + ": already in memory card image,"
                    " ignored.")
 
@@ -281,9 +278,9 @@ def do_export(cmd, mc, opts, args, opterr):
             print("Exporing", dirname, "to", filename)
             
             if opts.type == "max":
-                sf.save_max_drive(f)
+                max_drive.save(sf, f)
             else:
-                sf.save_ems(f)
+                ems.save(sf, f)
         finally:
             f.close()
 
@@ -800,7 +797,7 @@ def main(argv=sys.argv):
         (ret,) = xxx_todo_changeme.args
         pass
     
-    except (ps2mc.error, ps2save.error) as value:
+    except (ps2mc.error, ps2save.Error) as value:
         fn = getattr(value, "filename", None)
         if fn == None:
             fn = mcname

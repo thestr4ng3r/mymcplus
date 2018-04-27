@@ -290,8 +290,10 @@ def test_import_psu(monkeypatch, capsys, data, mc02_copy):
 
 def test_import_max(monkeypatch, capsys, data, mc02_copy):
     from mymcplus import ps2mc
-    from mymcplus import ps2save
+    from mymcplus import ps2mc_dir
+    from mymcplus.save import ps2save
     patch_fixed_time(monkeypatch, ps2mc)
+    patch_fixed_time(monkeypatch, ps2mc_dir)
     patch_fixed_time(monkeypatch, ps2save)
 
     mc_file = mc02_copy.join("mc02.ps2").strpath
@@ -345,8 +347,10 @@ def test_import_xps(monkeypatch, capsys, data, mc02_copy):
 
 def test_import_cbs(monkeypatch, capsys, data, mc02_copy):
     from mymcplus import ps2mc
-    from mymcplus import ps2save
+    from mymcplus import ps2mc_dir
+    from mymcplus.save import ps2save
     patch_fixed_time(monkeypatch, ps2mc)
+    patch_fixed_time(monkeypatch, ps2mc_dir)
     patch_fixed_time(monkeypatch, ps2save)
 
     mc_file = mc02_copy.join("mc02.ps2").strpath

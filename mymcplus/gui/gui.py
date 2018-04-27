@@ -28,7 +28,7 @@ if os.name == "nt" and hasattr(sys, "setdefaultencoding"):
 import wx
 
 from .. import ps2mc
-from .. import ps2save
+from ..save import ps2save
 from .icon_window import IconWindow
 from .dirlist_control import DirListControl
 from . import utils
