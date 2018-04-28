@@ -1,5 +1,6 @@
 
 from .. import ps2mc_dir
+from .. import utils
 from . import ps2save
 from .utils import *
 
@@ -20,7 +21,7 @@ def load(save, f):
         = struct.unpack("<H64sL8xH2x8s8s", read_fixed(f, 98))
     read_fixed(f, hlen - 98)
 
-    dirname = ps2mc_dir.zero_terminate(dirname)
+    dirname = utils.zero_terminate(dirname)
     created = ps2mc_dir.unpack_tod(created)
     modified = ps2mc_dir.unpack_tod(modified)
 
@@ -38,7 +39,7 @@ def load(save, f):
         if hlen < 98:
             raise ps2save.Corrupt("Header length too short.", f)
         read_fixed(f, hlen - 98)
-        name = ps2mc_dir.zero_terminate(name)
+        name = utils.zero_terminate(name)
         created = ps2mc_dir.unpack_tod(created)
         modified = ps2mc_dir.unpack_tod(modified)
         mode = mode // 256 % 256 + mode % 256 * 256

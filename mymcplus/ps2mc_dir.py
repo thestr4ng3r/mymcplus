@@ -21,6 +21,8 @@ import struct
 import time
 import calendar
 
+from . import utils
+
 PS2MC_DIRENT_LENGTH = 512
 
 DF_READ        = 0x0001
@@ -41,13 +43,6 @@ DF_HIDDEN      = 0x2000
 DF_4000        = 0x4000
 DF_EXISTS      = 0x8000
 
-def zero_terminate(s):
-    """Truncate a string at the first NUL ('\0') character, if any."""
-    
-    i = s.find(b'\0')
-    if i == -1:
-        return s
-    return s[:i]
 
 # mode, ???, length, created,
 # fat_cluster, parent_entry, modified, attr,
@@ -71,7 +66,7 @@ def unpack_dirent(s):
     ent = list(ent)
     ent[3] = _tod_struct.unpack(ent[3])
     ent[6] = _tod_struct.unpack(ent[6])
-    ent[8] = zero_terminate(ent[8])
+    ent[8] = utils.zero_terminate(ent[8])
     return ent
 
 def pack_dirent(ent):

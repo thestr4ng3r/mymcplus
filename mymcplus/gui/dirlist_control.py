@@ -17,7 +17,7 @@
 
 import wx
 
-from .. import ps2mc
+from .. import ps2mc, ps2iconsys
 from ..save import ps2save
 
 from . import utils
@@ -51,11 +51,11 @@ class DirListControl(wx.ListCtrl):
                 continue
             dirname = "/" + ent[8].decode("ascii")
             s = mc.get_icon_sys(dirname)
-            if s == None:
+            if s is None:
                 continue
-            a = ps2save.unpack_icon_sys(s)
             size = mc.dir_size(dirname)
-            title = ps2save.icon_sys_title(a, encoding=enc)
+            icon_sys = ps2iconsys.IconSys(s)
+            title = icon_sys.get_title(enc)
             table.append((ent, s, size, title))
 
     def update_dirtable(self, mc):

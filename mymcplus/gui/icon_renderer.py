@@ -22,6 +22,8 @@ from .linalg import Matrix4x4, Vector3
 from ..ps2icon import TEXTURE_WIDTH, TEXTURE_HEIGHT
 
 
+_LIGHTS_COUNT = 3
+
 _glsl_vert = b"""
 #version 150
 
@@ -34,12 +36,14 @@ in vec4 color_attr;
 
 out vec4 color_var;
 out vec2 uv_var;
+out vec3 normal_var;
 
 void main()
 {
     vec3 pos = vertex_attr / 4096.0;
     color_var = color_attr;
     uv_var = uv_attr / 4096.0;
+    normal_var = normal_attr / 4096.0;
     gl_Position = mvp_matrix_uni * vec4(pos, 1.0);
 }
 """
@@ -47,17 +51,34 @@ void main()
 _glsl_frag = b"""
 #version 150
 
+#define LIGHTS_COUNT """ + str(_LIGHTS_COUNT).encode("ascii") + b"""
+
 uniform sampler2D texture_uni;
+
+uniform vec3 light_dir_uni[LIGHTS_COUNT];
+uniform vec3 light_color_uni[LIGHTS_COUNT];
+uniform vec3 ambient_light_color_uni;
 
 in vec4 color_var;
 in vec2 uv_var;
+in vec3 normal_var;
 
 out vec4 color_out;
 
 void main()
 {
     vec3 tex_color = texture(texture_uni, uv_var).rgb;
-    color_out = color_var * vec4(tex_color, 1.0);
+    vec4 base_color = color_var * vec4(tex_color, 1.0);
+    
+    vec4 color = base_color * vec4(ambient_light_color_uni, 1.0);
+    
+    for(int i=0; i<LIGHTS_COUNT; i++)
+    {
+        float lambert = dot(light_dir_uni[i], normalize(normal_var));
+        color += vec4(lambert * light_color_uni[i], 1.0) * base_color;
+    }
+    
+    color_out = color;
 }
 """
 
@@ -68,9 +89,26 @@ _ATTRIB_COLOR =     3
 
 _TEX_UNIT =         0
 
-
 class IconRenderer:
     """Render a save file's 3D icon with OpenGL."""
+
+    class LightingConfig:
+        def __init__(self,
+                     light_dirs = ((0.0, 0.0, 0.0),
+                                   (0.0, 0.0, 0.0),
+                                   (0.0, 0.0, 0.0)),
+                     light_colors = ((0.0, 0.0, 0.0),
+                                     (0.0, 0.0, 0.0),
+                                     (0.0, 0.0, 0.0)),
+                     ambient_light_color = (0.0, 0.0, 0.0)):
+            self.light_dirs = light_dirs
+            self.light_colors = light_colors
+            self.ambient_light_color = ambient_light_color
+
+            self.light_dirs_data = (GLfloat * (3 * _LIGHTS_COUNT))(*[-f for t in light_dirs for f in t])
+            self.light_colors_data = (GLfloat * (3 * _LIGHTS_COUNT))(*[f for t in light_colors for f in t])
+            self.ambient_color_data = (GLfloat * 3)(*ambient_light_color)
+
 
     def __init__(self, gl_context):
         self.failed = False
@@ -78,6 +116,13 @@ class IconRenderer:
         self.context = gl_context
 
         self._icon = None
+        self.lighting_config = self.LightingConfig(light_dirs = ((0.0, -1.0, 0.0),
+                                                                 (0.0, 0.0, 0.0),
+                                                                 (0.0, 0.0, 0.0)),
+                                                   light_colors = ((1.0, 1.0, 1.0),
+                                                                   (0.0, 0.0, 0.0),
+                                                                   (0.0, 0.0, 0.0)),
+                                                   ambient_light_color = (0.0, 0.0, 0.0))
 
         self._program = None
         self._vertex_vbo = None
@@ -85,7 +130,12 @@ class IconRenderer:
         self._color_vbo = None
         self._vao = None
         self._texture = None
+
         self._mvp_matrix_uni = -1
+        self._light_dir_uni = -1
+        self._light_color_uni = -1
+        self._ambient_light_color_uni = -1
+
         self._gl_initialized = False
 
 
@@ -119,6 +169,9 @@ class IconRenderer:
             return
 
         self._mvp_matrix_uni = glGetUniformLocation(self._program, "mvp_matrix_uni")
+        self._light_dir_uni = glGetUniformLocation(self._program, "light_dir_uni")
+        self._light_color_uni = glGetUniformLocation(self._program, "light_color_uni")
+        self._ambient_light_color_uni = glGetUniformLocation(self._program, "ambient_light_color_uni")
 
         texture_uni = glGetUniformLocation(self._program, "texture_uni")
         glUseProgram(self._program)
@@ -182,6 +235,10 @@ class IconRenderer:
             projection_matrix = Matrix4x4.perspective(80.0, float(size.Width) / float(size.Height), 0.1, 500.0)
             glUniformMatrix4fv(self._mvp_matrix_uni, 1, GL_FALSE, (projection_matrix * modelview_matrix).ctypes_array)
 
+            glUniform3fv(self._light_dir_uni, 3, self.lighting_config.light_dirs_data)
+            glUniform3fv(self._light_color_uni, 3, self.lighting_config.light_colors_data)
+            glUniform3fv(self._ambient_light_color_uni, 1, self.lighting_config.ambient_color_data)
+
             glDisable(GL_CULL_FACE)
 
             glBindVertexArray(self._vao)
@@ -221,21 +278,10 @@ class IconRenderer:
         glGenerateMipmap(GL_TEXTURE_2D)
 
 
-
-
-    def set_lighting(self, lighting, vertex_diffuse, alt_lighting, light_dirs, light_colours, ambient):
-        #if self.failed:
-        #    return
-        #config = self.config
-        #config.lighting = lighting
-        #config.vertex_diffuse = vertex_diffuse
-        #config.alt_lighting = alt_lighting
-        #config.light_dirs = mkvec4arr3(light_dirs)
-        #config.light_colours = mkvec4arr3(light_colours)
-        #config.ambient = D3DXVECTOR4(*ambient)
-        #if mymcsup.set_config(config) == -1:
-        #    self.failed = True
+    def set_default_lighting(self, icon_sys):
         pass
+
+
 
     def set_animate(self, animate):
         #if self.failed:

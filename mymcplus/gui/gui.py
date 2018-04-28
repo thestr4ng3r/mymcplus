@@ -27,7 +27,7 @@ if os.name == "nt" and hasattr(sys, "setdefaultencoding"):
     sys.setdefaultencoding("mbcs")
 import wx
 
-from .. import ps2mc
+from .. import ps2mc, ps2iconsys
 from ..save import ps2save
 from .icon_window import IconWindow
 from .dirlist_control import DirListControl
@@ -287,24 +287,24 @@ class GuiFrame(wx.Frame):
         self.refresh()
 
     def evt_menu_open(self, event):
-        self.import_menu_item.Enable(self.mc != None)
-        selected = self.mc != None and len(self.dirlist.selected) > 0
+        self.import_menu_item.Enable(self.mc is not None)
+        selected = self.mc is not None and len(self.dirlist.selected) > 0
         self.export_menu_item.Enable(selected)
         self.delete_menu_item.Enable(selected)
         self.ascii_menu_item.Check(self.config.get_ascii())
-        if self.icon_win != None:
+        if self.icon_win is not None:
             self.icon_win.update_menu(self.icon_menu)
 
     def evt_dirlist_item_focused(self, event):
-        if self.icon_win == None:
+        if self.icon_win is None:
             return
 
         i = event.GetData()
-        (ent, icon_sys, size, title) = self.dirlist.dirtable[i]
+        (ent, icon_sys_data, size, title) = self.dirlist.dirtable[i]
         self.info1.SetLabel(title[0])
         self.info2.SetLabel(title[1])
 
-        a = ps2save.unpack_icon_sys(icon_sys)
+        icon_sys = ps2iconsys.IconSys(icon_sys_data)
 
         mc = self.mc
         if mc is None:
@@ -313,7 +313,7 @@ class GuiFrame(wx.Frame):
 
         try:
             mc.chdir("/" + ent[8].decode("ascii"))
-            f = mc.open(a[15].decode("ascii"), "rb")
+            f = mc.open(icon_sys.icon_file_normal, "rb")
             try:
                 icon = f.read()
             finally:

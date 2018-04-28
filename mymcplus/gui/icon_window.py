@@ -19,6 +19,7 @@ import wx
 from wx import glcanvas
 
 from .. import ps2icon
+from ..save import ps2save
 from .icon_renderer import IconRenderer
 
 
@@ -180,19 +181,21 @@ class IconWindow(wx.Window):
 
         if icon_data is None:
             self._icon = None
+            self._icon_sys = None
         else:
             try:
                 self._icon = ps2icon.Icon(icon_data)
             except ps2icon.Error as e:
                 print("Failed to load icon.", e)
                 self._icon = None
+                self._icon_sys = None
 
         self._renderer.set_icon(self._icon)
         self.canvas.Refresh(eraseBackground=False)
 
     def set_lighting(self, id):
         self.lighting_id = id
-        self._renderer.set_lighting(**self.light_options[id])
+        #self._renderer.set_lighting(**self.light_options[id])
 
     def set_animate(self, animate):
         #if self.failed:

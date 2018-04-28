@@ -21,8 +21,8 @@ import sys
 import os
 import binascii
 
-from mymcplus.ps2mc_dir import *
-from mymcplus.sjistab import shift_jis_normalize_table
+from ..ps2mc_dir import *
+from .. import ps2iconsys
 
 
 from . import codebreaker, ems, max_drive, sharkport
@@ -55,81 +55,6 @@ class Eof(Corrupt):
 class Subdir(Corrupt):
     def __init__(self, f = None):
         Corrupt.__init__(self, "Non-file in save file.", f)
-
-#
-# Table of graphically similar ASCII characters that can be used
-# as substitutes for Unicode characters.
-#
-char_substs = {
-    u'\u00a2': u"c",
-    u'\u00b4': u"'",
-    u'\u00d7': u"x",
-    u'\u00f7': u"/",
-    u'\u2010': u"-",
-    u'\u2015': u"-",
-    u'\u2018': u"'",
-    u'\u2019': u"'",
-    u'\u201c': u'"',
-    u'\u201d': u'"',
-    u'\u2032': u"'",
-    u'\u2212': u"-",
-    u'\u226a': u"<<",
-    u'\u226b': u">>",
-    u'\u2500': u"-",
-    u'\u2501': u"-",
-    u'\u2502': u"|",
-    u'\u2503': u"|",
-    u'\u250c': u"+",
-    u'\u250f': u"+",
-    u'\u2510': u"+",
-    u'\u2513': u"+",
-    u'\u2514': u"+",
-    u'\u2517': u"+",
-    u'\u2518': u"+",
-    u'\u251b': u"+",
-    u'\u251c': u"+",
-    u'\u251d': u"+",
-    u'\u2520': u"+",
-    u'\u2523': u"+",
-    u'\u2524': u"+",
-    u'\u2525': u"+",
-    u'\u2528': u"+",
-    u'\u252b': u"+",
-    u'\u252c': u"+",
-    u'\u252f': u"+",
-    u'\u2530': u"+",
-    u'\u2533': u"+",
-    u'\u2537': u"+",
-    u'\u2538': u"+",
-    u'\u253b': u"+",
-    u'\u253c': u"+",
-    u'\u253f': u"+",
-    u'\u2542': u"+",
-    u'\u254b': u"+",
-    u'\u25a0': u"#",
-    u'\u25a1': u"#",
-    u'\u3001': u",",
-    u'\u3002': u".",
-    u'\u3003': u'"',
-    u'\u3007': u'0',
-    u'\u3008': u'<',
-    u'\u3009': u'>',
-    u'\u300a': u'<<',
-    u'\u300b': u'>>',
-    u'\u300a': u'<<',
-    u'\u300b': u'>>',
-    u'\u300c': u'[',
-    u'\u300d': u']',
-    u'\u300e': u'[',
-    u'\u300f': u']',
-    u'\u3010': u'[',
-    u'\u3011': u']',
-    u'\u3014': u'[',
-    u'\u3015': u']',
-    u'\u301c': u'~',
-    u'\u30fc': u'-',
-}
-
 
 
 PS2SAVE_NPO_MAGIC = b"nPort"
@@ -167,39 +92,6 @@ def detect_file_type(f):
 
     return None
 
-
-def unpack_icon_sys(s):
-    """Unpack an icon.sys file into a tuple."""
-
-    # magic, title offset, ...
-    # [14] title, normal icon, copy icon, del icon
-    a = struct.unpack("<4s2xH4x"
-                      "L" "16s16s16s16s" "16s16s16s" "16s16s16s" "16s"
-                      "68s64s64s64s512x", s)
-    a = list(a)
-    for i in range(3, 7):
-        a[i] = struct.unpack("<4L", a[i])
-        a[i] = list(map(hex, a[i]))
-    for i in range(7, 14):
-        a[i] = struct.unpack("<4f", a[i])
-    a[14] = zero_terminate(a[14])
-    a[15] = zero_terminate(a[15])
-    a[16] = zero_terminate(a[16])
-    a[17] = zero_terminate(a[17])
-    return a
-
-
-def icon_sys_title(icon_sys, encoding=None):
-    """Extract the two lines of the title stored in an icon.sys tuple."""
-
-    offset = icon_sys[1]
-    title = icon_sys[14]
-    title2 = shift_jis_conv(title[offset:], encoding)
-    title1 = shift_jis_conv(title[:offset], encoding)
-    return (title1, title2)
-
-
-
 #
 # Set up tables of illegal and problematic characters in file names.
 #
@@ -233,7 +125,7 @@ def make_longname(dirname, sf):
     icon_sys = sf.get_icon_sys()
     title = ""
     if icon_sys is not None:
-        title = icon_sys_title(icon_sys, "ascii")
+        title = icon_sys.get_title("ascii")
         title = title[0] + " " + title[1]
         title = " ".join(title.split())
     crc = binascii.crc32(b"")
@@ -250,32 +142,6 @@ def make_longname(dirname, sf):
 
 
 
-def shift_jis_conv(src, encoding = None):
-    """Convert Shift-JIS strings to a graphically similar representation.
-
-    If encoding is "unicode" then a Unicode string is returned, otherwise
-    a string in the encoding specified is returned.  If necessary,
-    graphically similar characters are used to replace characters not
-    exactly    representable in the desired encoding.
-    """
-    
-    if encoding == None:
-        encoding = sys.getdefaultencoding()
-    if encoding == "shift_jis":
-        return src
-    u = src.decode("shift_jis", "replace")
-    if encoding == "unicode":
-        return u
-    a = []
-    for uc in u:
-        try:
-            uc.encode(encoding)
-            a.append(uc)
-        except UnicodeError:
-            for uc2 in shift_jis_normalize_table.get(uc, uc):
-                a.append(char_substs.get(uc2, uc2))
-    
-    return "".join(a)
 
 
 
@@ -320,6 +186,9 @@ class ps2_save_file(object):
         for i in range(self.dirent[2]):
             (ent, data) = self.get_file(i)
             if ent[8].decode("ascii") == "icon.sys" and len(data) >= 964:
-                return unpack_icon_sys(data[:964])
+                try:
+                    return ps2iconsys.IconSys(data[:964])
+                except ps2iconsys.Error:
+                    pass
         return None
 

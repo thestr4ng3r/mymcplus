@@ -3,6 +3,7 @@ import array
 import zlib
 
 from .. import ps2mc_dir
+from .. import utils
 from .utils import *
 
 
@@ -69,10 +70,10 @@ def load(save, f):
         raise ps2save.Corrupt("Header lengh too short.", f)
     (dlen, flen, dirname, created, modified, d44, d48, dirmode,
      d50, d54, d58, title) = struct.unpack("<LL32s8s8sLLLLLL%ds" % (hlen - 92), read_fixed(f, hlen - 12))
-    dirname = ps2mc_dir.zero_terminate(dirname)
+    dirname = utils.zero_terminate(dirname)
     created = ps2mc_dir.unpack_tod(created)
     modified = ps2mc_dir.unpack_tod(modified)
-    title = ps2mc_dir.zero_terminate(title)
+    title = utils.zero_terminate(title)
 
     # These fields don't always seem to be set correctly.
     if not ps2mc_dir.mode_is_dir(dirmode):
@@ -108,7 +109,7 @@ def load(save, f):
     for i in range(len(files)):
         (header, data) = files[i]
         (created, modified, size, mode, h06, h08, h0C, name) = header
-        name = ps2mc_dir.zero_terminate(name)
+        name = utils.zero_terminate(name)
         created = ps2mc_dir.unpack_tod(created)
         modified = ps2mc_dir.unpack_tod(modified)
         if not ps2mc_dir.mode_is_file(mode):

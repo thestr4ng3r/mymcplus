@@ -2,6 +2,7 @@
 import binascii
 
 from .. import ps2mc_dir
+from .. import utils
 from . import ps2save
 from . import lzari
 from ..round import round_up
@@ -25,7 +26,7 @@ def load2(save, f):
         if len(s) - off < 36:
             raise ps2save.Eof(f)
         (l, name) = struct.unpack("<L32s", s[off: off + 36])
-        name = ps2mc_dir.zero_terminate(name)
+        name = utils.zero_terminate(name)
         # print "%08x %08x %s" % (off, l, name)
         off += 36
         data = s[off: off + l]
@@ -54,7 +55,7 @@ def load(save, f, timestamp=None):
         s = f.read()
     else:
         s = read_fixed(f, clen - 4)
-    dirname = ps2mc_dir.zero_terminate(dirname)
+    dirname = utils.zero_terminate(dirname)
     if timestamp == None:
         timestamp = ps2mc_dir.tod_now()
     save.set_directory((ps2mc_dir.DF_RWX | ps2mc_dir.DF_DIR | ps2mc_dir.DF_0400 | ps2mc_dir.DF_EXISTS,
@@ -71,7 +72,7 @@ def save(save, f):
     iconsysname = ""
     icon_sys = save.get_icon_sys()
     if icon_sys != None:
-        title = ps2save.icon_sys_title(icon_sys, "ascii")
+        title = icon_sys.get_title("ascii")
         if len(title[0]) > 0 and title[0][-1] != ' ':
             iconsysname = title[0] + " " + title[1].strip()
         else:

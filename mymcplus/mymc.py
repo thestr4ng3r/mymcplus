@@ -28,6 +28,7 @@ from .save import ps2save
 from .ps2mc_dir import *
 from .save import codebreaker, ems, max_drive, sharkport
 from . import verbuild
+from . import ps2iconsys
 
 class subopt_error(Exception):
     pass
@@ -329,12 +330,16 @@ def do_setmode(cmd, mc, opts, args, opterr):
             ent[0] = value
         mc.set_dirent(arg, ent)
 
-def _get_ps2_title(mc, enc):
-    s = mc.get_icon_sys(".");
-    if s == None:
+def _get_ps2_title(mc, encoding):
+    s = mc.get_icon_sys(".")
+    if s is None:
         return None
-    a = ps2save.unpack_icon_sys(s)
-    return ps2save.icon_sys_title(a, enc)
+    try:
+        icon_sys = ps2iconsys.IconSys(s)
+    except ps2iconsys.Error:
+        return None
+
+    return icon_sys.get_title(encoding)
 
 def _get_psx_title(mc, savename, enc):
     mode = mc.get_mode(savename)
