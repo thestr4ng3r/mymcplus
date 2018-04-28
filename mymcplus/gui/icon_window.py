@@ -144,6 +144,7 @@ class IconWindow(wx.Window):
         self._renderer = IconRenderer(self.context)
 
         self._icon = None
+        self._icon_sys = None
 
         self.canvas.Bind(wx.EVT_PAINT, self.paint)
 
@@ -173,7 +174,7 @@ class IconWindow(wx.Window):
         menu.Check(self.camera_id, True)
 
 
-    def load_icon(self, icon_sys_data, icon_data):
+    def load_icon(self, icon_sys, icon_data):
         """Pass the raw icon data to the support DLL for display."""
 
         if self.failed:
@@ -185,12 +186,13 @@ class IconWindow(wx.Window):
         else:
             try:
                 self._icon = ps2icon.Icon(icon_data)
+                self._icon_sys = icon_sys
             except ps2icon.Error as e:
                 print("Failed to load icon.", e)
                 self._icon = None
                 self._icon_sys = None
 
-        self._renderer.set_icon(self._icon)
+        self._renderer.set_icon(self._icon_sys, self._icon)
         self.canvas.Refresh(eraseBackground=False)
 
     def set_lighting(self, id):

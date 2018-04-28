@@ -20,6 +20,7 @@
 import struct
 from . import utils
 from .sjistab import shift_jis_normalize_table
+import sys
 
 
 class Error(Exception):
@@ -103,8 +104,6 @@ char_substs = {
     u'\u3009': u'>',
     u'\u300a': u'<<',
     u'\u300b': u'>>',
-    u'\u300a': u'<<',
-    u'\u300b': u'>>',
     u'\u300c': u'[',
     u'\u300d': u']',
     u'\u300e': u'[',
@@ -127,7 +126,7 @@ def shift_jis_conv(src, encoding=None):
     exactly    representable in the desired encoding.
     """
 
-    if encoding == None:
+    if encoding is None:
         encoding = sys.getdefaultencoding()
     if encoding == "shift_jis":
         return src
@@ -162,7 +161,7 @@ class IconSys:
 
         self.bg_colors = (d[5:21], d[5:9], d[9:13], d[17:21])
 
-        self.light_dirs = (d[21:25], d[25:29], d[29:33], d[33:37])
+        self.light_dirs = (d[21:25], d[25:29], d[29:33])
         self.light_colors = (d[33:37], d[37:41], d[41:45])
         self.ambient_light_color = d[45:49]
 
