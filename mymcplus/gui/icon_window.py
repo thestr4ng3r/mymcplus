@@ -23,51 +23,35 @@ from ..save import ps2save
 from .icon_renderer import IconRenderer
 
 
-lighting_none = {"lighting": False,
-         "vertex_diffuse": False,
-         "alt_lighting": False,
-         "light_dirs": [[0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]],
-         "light_colours": [[0, 0, 0, 0], [0, 0, 0, 0],
-                   [0, 0, 0, 0]],
-         "ambient": [0, 0, 0, 0]}
+lighting_none = IconRenderer.LightingConfig(
+    light_dirs = ((0.0, 0.0, 0.0),
+                  (0.0, 0.0, 0.0),
+                  (0.0, 0.0, 0.0)),
+    light_colors = ((0.0, 0.0, 0.0),
+                    (0.0, 0.0, 0.0),
+                    (0.0, 0.0, 0.0)),
+    ambient_light_color = (1.0, 1.0, 1.0))
 
-lighting_diffuse = {"lighting": False,
-            "vertex_diffuse": True,
-            "alt_lighting": False,
-            "light_dirs": [[0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]],
-            "light_colours": [[0, 0, 0, 0], [0, 0, 0, 0],
-                      [0, 0, 0, 0]],
-            "ambient": [0, 0, 0, 0]}
+lighting_icon = None
 
-lighting_icon = {"lighting": True,
-         "vertex_diffuse": True,
-         "alt_lighting": False,
-         "light_dirs": [[0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]],
-         "light_colours": [[0, 0, 0, 0], [0, 0, 0, 0],
-                   [0, 0, 0, 0]],
-         "ambient": [0, 0, 0, 0]}
+lighting_alt1 = IconRenderer.LightingConfig(
+    light_dirs = ((1.0, -1.0, 2.0),
+                  (-1.0, 1.0, -2.0),
+                  (0.0, 1.0, 0.0)),
+    light_colors = ((1.0, 1.0, 1.0),
+                    (1.0, 1.0, 1.0),
+                    (0.7, 0.7, 0.7)),
+    ambient_light_color = (0.5, 0.5, 0.5))
 
-lighting_alternate = {"lighting": True,
-              "vertex_diffuse": True,
-              "alt_lighting": True,
-              "light_dirs": [[1, -1, 2, 0],
-                     [-1, 1, -2, 0],
-                     [0, 1, 0, 0]],
-              "light_colours": [[1, 1, 1, 1],
-                    [1, 1, 1, 1],
-                    [0.7, 0.7, 0.7, 1]],
-              "ambient": [0.5, 0.5, 0.5, 1]}
+lighting_alt2 = IconRenderer.LightingConfig(
+    light_dirs = ((1.0, -1.0, 2.0),
+                  (-1.0, 1.0, -2.0),
+                  (0.0, 4.0, 1.0)),
+    light_colors = ((0.7, 0.7, 0.7),
+                    (0.7, 0.7, 0.7),
+                    (0.2, 0.2, 0.2)),
+    ambient_light_color = (0.3, 0.3, 0.3))
 
-lighting_alternate2 = {"lighting": True,
-               "vertex_diffuse": False,
-               "alt_lighting": True,
-               "light_dirs": [[1, -1, 2, 0],
-                      [-1, 1, -2, 0],
-                      [0, 4, 1, 0]],
-               "light_colours": [[0.7, 0.7, 0.7, 1],
-                     [0.7, 0.7, 0.7, 1],
-                     [0.2, 0.2, 0.2, 1]],
-               "ambient": [0.3, 0.3, 0.3, 1]}
 
 camera_default = [0, 4, -8]
 camera_high = [0, 7, -6]
@@ -90,8 +74,8 @@ class IconWindow(wx.Window):
 
     light_options = {ID_CMD_LIGHT_NONE: lighting_none,
                      ID_CMD_LIGHT_ICON: lighting_icon,
-                     ID_CMD_LIGHT_ALT1: lighting_alternate,
-                     ID_CMD_LIGHT_ALT2: lighting_alternate2}
+                     ID_CMD_LIGHT_ALT1: lighting_alt1,
+                     ID_CMD_LIGHT_ALT2: lighting_alt2}
 
     camera_options = {ID_CMD_CAMERA_FLAT: camera_flat,
                       ID_CMD_CAMERA_DEFAULT: camera_default,
@@ -154,9 +138,11 @@ class IconWindow(wx.Window):
         #self.config = config = mymcsup.icon_config()
         #config.animate = True
 
+        self.lighting_id = self.ID_CMD_LIGHT_ICON
+
         self.menu = wx.Menu()
         self.append_menu_options(self, self.menu)
-        self.set_lighting(self.ID_CMD_LIGHT_ALT2)
+        self.set_lighting(self.lighting_id)
         self.set_camera(self.ID_CMD_CAMERA_DEFAULT)
 
         self.Bind(wx.EVT_CONTEXT_MENU, self.evt_context_menu)
@@ -195,9 +181,12 @@ class IconWindow(wx.Window):
         self._renderer.set_icon(self._icon_sys, self._icon)
         self.canvas.Refresh(eraseBackground=False)
 
+
     def set_lighting(self, id):
         self.lighting_id = id
-        #self._renderer.set_lighting(**self.light_options[id])
+        self._renderer.lighting_config = self.light_options[id]
+        self.canvas.Refresh(eraseBackground=False)
+
 
     def set_animate(self, animate):
         #if self.failed:

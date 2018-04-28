@@ -128,13 +128,7 @@ class IconRenderer:
 
         self._icon = None
         self._icon_sys = None
-        self._default_lighting_config = self.LightingConfig(light_dirs = ((0.0, -1.0, 0.0),
-                                                                          (0.0, 0.0, 0.0),
-                                                                          (0.0, 0.0, 0.0)),
-                                                            light_colors = ((1.0, 1.0, 1.0),
-                                                                            (0.0, 0.0, 0.0),
-                                                                            (0.0, 0.0, 0.0)),
-                                                            ambient_light_color = (0.0, 0.0, 0.0))
+        self._default_lighting_config = self.LightingConfig()
         self.lighting_config = None
 
         self._program = None
