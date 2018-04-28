@@ -142,6 +142,13 @@ class Matrix4x4:
         ])
 
 
+    @classmethod
+    def translate(cls, v):
+        return Matrix4x4([1.0, 0.0, 0.0, 0.0,
+                          0.0, 1.0, 0.0, 0.0,
+                          0.0, 0.0, 1.0, 0.0,
+                          v.x, v.y, v.z, 1.0])
+
 
     @classmethod
     def perspective(cls, fovy, aspect, near, far):
@@ -157,11 +164,10 @@ class Matrix4x4:
     @classmethod
     def look_at(cls, eye, center, up):
         f = (center - eye).normalized
-        u = up.normalized
-        s = f.cross(u)
-        u = s.normalized.cross(f)
+        s = f.cross(up.normalized).normalized
+        u = s.cross(f)
         return cls([
             s[0],       u[0],       -f[0],     0.0,
             s[1],       u[1],       -f[1],     0.0,
             s[2],       u[2],       -f[2],     0.0,
-            -eye[0], -eye[1],     -eye[2],     1.0])
+            0.0,         0.0,         0.0,     1.0]) * cls.translate(eye * -1.0)

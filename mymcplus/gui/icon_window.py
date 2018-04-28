@@ -21,6 +21,7 @@ from wx import glcanvas
 from .. import ps2icon
 from ..save import ps2save
 from .icon_renderer import IconRenderer
+from .linalg import Vector3
 
 
 lighting_none = IconRenderer.LightingConfig(
@@ -67,20 +68,13 @@ class IconWindow(wx.Window):
     ID_CMD_LIGHT_ICON = 203
     ID_CMD_LIGHT_ALT1 = 204
     ID_CMD_LIGHT_ALT2 = 205
-    ID_CMD_CAMERA_FLAT = 206
-    ID_CMD_CAMERA_DEFAULT = 207
-    ID_CMD_CAMERA_NEAR = 209
-    ID_CMD_CAMERA_HIGH = 210
+    ID_CMD_CAMERA_RESET = 206
 
     light_options = {ID_CMD_LIGHT_NONE: lighting_none,
                      ID_CMD_LIGHT_ICON: lighting_icon,
                      ID_CMD_LIGHT_ALT1: lighting_alt1,
                      ID_CMD_LIGHT_ALT2: lighting_alt2}
 
-    camera_options = {ID_CMD_CAMERA_FLAT: camera_flat,
-                      ID_CMD_CAMERA_DEFAULT: camera_default,
-                      ID_CMD_CAMERA_NEAR: camera_near,
-                      ID_CMD_CAMERA_HIGH: camera_high}
 
     def append_menu_options(self, win, menu):
         menu.AppendCheckItem(IconWindow.ID_CMD_ANIMATE, "Animate Icons")
@@ -90,10 +84,7 @@ class IconWindow(wx.Window):
         menu.AppendRadioItem(IconWindow.ID_CMD_LIGHT_ALT1, "Alternate Lighting")
         menu.AppendRadioItem(IconWindow.ID_CMD_LIGHT_ALT2, "Alternate Lighting 2")
         menu.AppendSeparator()
-        menu.AppendRadioItem(IconWindow.ID_CMD_CAMERA_FLAT, "Camera Flat")
-        menu.AppendRadioItem(IconWindow.ID_CMD_CAMERA_DEFAULT, "Camera Default")
-        menu.AppendRadioItem(IconWindow.ID_CMD_CAMERA_NEAR, "Camera Near")
-        menu.AppendRadioItem(IconWindow.ID_CMD_CAMERA_HIGH, "Camera High")
+        menu.Append(IconWindow.ID_CMD_CAMERA_RESET, "Reset Camera")
 
         win.Bind(wx.EVT_MENU, self.evt_menu_animate, id=IconWindow.ID_CMD_ANIMATE)
         win.Bind(wx.EVT_MENU, self.evt_menu_light, id=IconWindow.ID_CMD_LIGHT_NONE)
@@ -101,10 +92,7 @@ class IconWindow(wx.Window):
         win.Bind(wx.EVT_MENU, self.evt_menu_light, id=IconWindow.ID_CMD_LIGHT_ALT1)
         win.Bind(wx.EVT_MENU, self.evt_menu_light, id=IconWindow.ID_CMD_LIGHT_ALT2)
 
-        win.Bind(wx.EVT_MENU, self.evt_menu_camera, id=IconWindow.ID_CMD_CAMERA_FLAT)
-        win.Bind(wx.EVT_MENU, self.evt_menu_camera, id=IconWindow.ID_CMD_CAMERA_DEFAULT)
-        win.Bind(wx.EVT_MENU, self.evt_menu_camera, id=IconWindow.ID_CMD_CAMERA_NEAR)
-        win.Bind(wx.EVT_MENU, self.evt_menu_camera, id=IconWindow.ID_CMD_CAMERA_HIGH)
+        win.Bind(wx.EVT_MENU, self.evt_menu_camera, id=IconWindow.ID_CMD_CAMERA_RESET)
 
     def __init__(self, parent, focus):
         super().__init__(parent)
@@ -138,14 +126,24 @@ class IconWindow(wx.Window):
         #self.config = config = mymcsup.icon_config()
         #config.animate = True
 
+        self._camera_dragging_rotation = False
+        self._camera_dragging_offset = False
+        self._last_mouse_pos = None
+
         self.lighting_id = self.ID_CMD_LIGHT_ICON
 
         self.menu = wx.Menu()
         self.append_menu_options(self, self.menu)
         self.set_lighting(self.lighting_id)
-        self.set_camera(self.ID_CMD_CAMERA_DEFAULT)
+        self.reset_camera()
 
         self.Bind(wx.EVT_CONTEXT_MENU, self.evt_context_menu)
+        self.canvas.Bind(wx.EVT_LEFT_DOWN, self.evt_mouse_left_down)
+        self.canvas.Bind(wx.EVT_LEFT_UP, self.evt_mouse_left_up)
+        self.canvas.Bind(wx.EVT_MIDDLE_DOWN, self.evt_mouse_middle_down)
+        self.canvas.Bind(wx.EVT_MIDDLE_UP, self.evt_mouse_middle_up)
+        self.canvas.Bind(wx.EVT_MOTION, self.evt_mouse_motion)
+        self.canvas.Bind(wx.EVT_MOUSEWHEEL, self.evt_mouse_wheel)
 
 
     def paint(self, _):
@@ -157,7 +155,6 @@ class IconWindow(wx.Window):
 
         menu.Check(IconWindow.ID_CMD_ANIMATE, False)#self.config.animate)
         menu.Check(self.lighting_id, True)
-        menu.Check(self.camera_id, True)
 
 
     def load_icon(self, icon_sys, icon_data):
@@ -196,20 +193,91 @@ class IconWindow(wx.Window):
         #    self.failed = True
         pass
 
-    def set_camera(self, id):
-        self.camera_id = id
-        self._renderer.set_camera(self.camera_options[id])
+
+    def reset_camera(self):
+        self._renderer.camera_offset = Vector3(0.0, -2.5, 0.0)
+        self._renderer.camera_rotation = (0.0, 0.0)
+        self._renderer.camera_distance = 5.0
+        self.canvas.Refresh(eraseBackground=False)
+
+
+    def evt_mouse_left_down(self, event):
+        self._camera_dragging_rotation = True
+        self._last_mouse_pos = event.GetPosition()
+
+
+    def evt_mouse_left_up(self, event):
+        self._camera_dragging_rotation = False
+
+
+    def evt_mouse_middle_down(self, event):
+        self._camera_dragging_offset = True
+        self._last_mouse_pos = event.GetPosition()
+
+    def evt_mouse_middle_up(self, event):
+        self._camera_dragging_offset = False
+
+
+    def evt_mouse_motion(self, event):
+        import math
+
+        if self._camera_dragging_rotation:
+            speed = (0.01, 0.01)
+
+            delta = event.GetPosition()
+            delta -= self._last_mouse_pos
+
+            cam_rot = self._renderer.camera_rotation
+            cam_rot = (
+                cam_rot[0] + speed[0] * delta.x,
+                max(-math.pi * 0.5 + 0.01,
+                    min(math.pi * 0.5 - 0.01,
+                        cam_rot[1] - speed[1] * delta.y))
+            )
+            self._renderer.camera_rotation = cam_rot
+        elif self._camera_dragging_offset:
+            speed = 0.01
+
+            delta = event.GetPosition()
+            delta -= self._last_mouse_pos
+
+            (eye, center, up) = self._renderer.calculate_camera()
+            dir = (center - eye).normalized
+            right = up.cross(dir)
+            up = dir.cross(right)
+
+            offset = self._renderer.camera_offset
+            offset = offset \
+                     + right * (speed * delta.x) \
+                     + up * (speed * delta.y)
+            self._renderer.camera_offset = offset
+        else:
+            return
+
+        self.canvas.Refresh(eraseBackground=False)
+        self._last_mouse_pos = event.GetPosition()
+
+
+    def evt_mouse_wheel(self, event):
+        speed = 0.001
+        rot = event.GetWheelRotation()
+        self._renderer.camera_distance = max(0.1, self._renderer.camera_distance - rot * speed)
+        self.canvas.Refresh(eraseBackground=False)
+
 
     def evt_context_menu(self, event):
         self.update_menu(self.menu)
         self.PopupMenu(self.menu)
 
+
     def evt_menu_animate(self, event):
         #self.set_animate(not self.config.animate)
         pass
 
+
     def evt_menu_light(self, event):
         self.set_lighting(event.GetId())
 
+
     def evt_menu_camera(self, event):
-        self.set_camera(event.GetId())
+        self.reset_camera()

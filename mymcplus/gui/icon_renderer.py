@@ -15,6 +15,7 @@
 # along with mymc+.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+import math
 from ctypes import c_void_p
 from OpenGL.GL import *
 from .linalg import Matrix4x4, Vector3
@@ -131,6 +132,10 @@ class IconRenderer:
         self._default_lighting_config = self.LightingConfig()
         self.lighting_config = None
 
+        self.camera_rotation = (0.0, 0.0)
+        self.camera_distance = 5.0
+        self.camera_offset = Vector3(0.0, 0.0, 0.0)
+
         self._program = None
         self._vertex_vbo = None
         self._normal_uv_vbo = None
@@ -214,6 +219,16 @@ class IconRenderer:
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB5_A1, TEXTURE_WIDTH, TEXTURE_HEIGHT, 0, GL_RGBA, GL_UNSIGNED_SHORT_1_5_5_5_REV, c_void_p(0))
 
 
+    def calculate_camera(self):
+        camera_cosy = math.cos(self.camera_rotation[1])
+        camera_pos = Vector3(math.sin(self.camera_rotation[0]) * camera_cosy,
+                             math.sin(self.camera_rotation[1]),
+                             math.cos(self.camera_rotation[0]) * camera_cosy)
+        camera_pos = self.camera_offset + camera_pos * self.camera_distance
+
+        return camera_pos, self.camera_offset, Vector3(0.0, -1.0, 0.0)
+
+
     def paint(self, canvas):
         self.context.SetCurrent(canvas)
 
@@ -238,7 +253,7 @@ class IconRenderer:
             glActiveTexture(GL_TEXTURE0 + _TEX_UNIT)
             glBindTexture(GL_TEXTURE_2D, self._texture)
 
-            modelview_matrix = Matrix4x4.look_at(Vector3(0.0, 2.5, 4.0), Vector3(0.0, 2.5, 0.0), Vector3(0.0, -1.0, 0.0))
+            modelview_matrix = Matrix4x4.look_at(*self.calculate_camera())
             projection_matrix = Matrix4x4.perspective(80.0, float(size.Width) / float(size.Height), 0.1, 500.0)
             glUniformMatrix4fv(self._mvp_matrix_uni, 1, GL_FALSE, (projection_matrix * modelview_matrix).ctypes_array)
 
