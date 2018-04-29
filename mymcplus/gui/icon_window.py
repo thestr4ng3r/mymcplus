@@ -195,7 +195,7 @@ class IconWindow(wx.Window):
 
 
     def reset_camera(self):
-        self._renderer.camera_offset = Vector3(0.0, -2.5, 0.0)
+        self._renderer.camera_offset = Vector3(0.0, 2.5, 0.0)
         self._renderer.camera_rotation = (0.0, 0.0)
         self._renderer.camera_distance = 5.0
         self.canvas.Refresh(eraseBackground=False)
@@ -229,7 +229,7 @@ class IconWindow(wx.Window):
 
             cam_rot = self._renderer.camera_rotation
             cam_rot = (
-                cam_rot[0] + speed[0] * delta.x,
+                cam_rot[0] - speed[0] * delta.x,
                 max(-math.pi * 0.5 + 0.01,
                     min(math.pi * 0.5 - 0.01,
                         cam_rot[1] - speed[1] * delta.y))

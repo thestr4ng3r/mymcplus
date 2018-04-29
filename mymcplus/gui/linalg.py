@@ -16,7 +16,7 @@
 #
 
 from array import array
-from math import tan, radians, sqrt
+from math import tan, radians, sqrt, sin, cos
 from OpenGL import GL
 
 
@@ -148,6 +148,36 @@ class Matrix4x4:
                           0.0, 1.0, 0.0, 0.0,
                           0.0, 0.0, 1.0, 0.0,
                           v.x, v.y, v.z, 1.0])
+
+
+    @classmethod
+    def rotate_x(cls, rad):
+        s = sin(rad)
+        c = cos(rad)
+        return Matrix4x4([1.0, 0.0, 0.0, 0.0,
+                          0.0,   c,  -s, 0.0,
+                          0.0,   s,   c, 0.0,
+                          0.0, 0.0, 0.0, 1.0])
+
+
+    @classmethod
+    def rotate_y(cls, rad):
+        s = sin(rad)
+        c = cos(rad)
+        return Matrix4x4([  c, 0.0,   s, 0.0,
+                          0.0, 1.0, 0.0, 0.0,
+                           -s, 0.0,   c, 0.0,
+                          0.0, 0.0, 0.0, 1.0])
+
+
+    @classmethod
+    def rotate_z(cls, rad):
+        s = sin(rad)
+        c = cos(rad)
+        return Matrix4x4([  c,  -s, 0.0, 0.0,
+                            s,   c, 0.0, 0.0,
+                          0.0, 0.0, 1.0, 0.0,
+                          0.0, 0.0, 0.0, 1.0])
 
 
     @classmethod

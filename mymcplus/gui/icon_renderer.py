@@ -29,6 +29,7 @@ _glsl_vert = b"""
 #version 150
 
 uniform mat4 mvp_matrix_uni;
+uniform mat4 transform_matrix_uni;
 
 in vec3 vertex_attr;
 in vec3 normal_attr;
@@ -41,10 +42,17 @@ out vec3 normal_var;
 
 void main()
 {
-    vec3 pos = vertex_attr / 4096.0;
+    vec3 pos = (vertex_attr / 4096.0) * vec3(1.0, -1.0, -1.0);
+    pos = (transform_matrix_uni * vec4(pos, 1.0)).xyz;
+    
     color_var = color_attr;
+    
     uv_var = uv_attr / 4096.0;
-    normal_var = normal_attr / 4096.0;
+    
+    vec3 normal = normalize(normal_attr / 4096.0) * vec3(1.0, -1.0, -1.0);
+    normal = mat3(transform_matrix_uni) * normal;
+    normal_var = normal;
+    
     gl_Position = mvp_matrix_uni * vec4(pos, 1.0);
 }
 """
@@ -68,19 +76,23 @@ out vec4 color_out;
 
 void main()
 {
-    vec3 tex_color = texture(texture_uni, uv_var).rgb;
-    vec4 base_color = color_var * vec4(tex_color, 1.0);
+    vec3 normal = normalize(normal_var);
+
+    float alpha = color_var.a;
     
-    vec4 color = base_color * vec4(ambient_light_color_uni, 1.0);
+    vec3 tex_color = texture(texture_uni, uv_var).rgb;
+    vec3 base_color = color_var.rgb * tex_color;
+    
+    vec3 color = base_color * ambient_light_color_uni;
     
     for(int i=0; i<LIGHTS_COUNT; i++)
     {
-        float lambert = dot(light_dir_uni[i], normalize(normal_var));
+        float lambert = dot(light_dir_uni[i], normal);
         lambert = max(lambert, 0.0);
-        color += vec4(lambert * light_color_uni[i], 1.0) * base_color;
+        color += lambert * light_color_uni[i] * base_color;
     }
     
-    color_out = color;
+    color_out = vec4(color, alpha);
 }
 """
 
@@ -144,6 +156,7 @@ class IconRenderer:
         self._texture = None
 
         self._mvp_matrix_uni = -1
+        self._transform_matrix_uni = -1
         self._light_dir_uni = -1
         self._light_color_uni = -1
         self._ambient_light_color_uni = -1
@@ -181,6 +194,7 @@ class IconRenderer:
             return
 
         self._mvp_matrix_uni = glGetUniformLocation(self._program, "mvp_matrix_uni")
+        self._transform_matrix_uni = glGetUniformLocation(self._program, "transform_matrix_uni")
         self._light_dir_uni = glGetUniformLocation(self._program, "light_dir_uni")
         self._light_color_uni = glGetUniformLocation(self._program, "light_color_uni")
         self._ambient_light_color_uni = glGetUniformLocation(self._program, "ambient_light_color_uni")
@@ -220,13 +234,14 @@ class IconRenderer:
 
 
     def calculate_camera(self):
-        camera_cosy = math.cos(self.camera_rotation[1])
-        camera_pos = Vector3(math.sin(self.camera_rotation[0]) * camera_cosy,
-                             math.sin(self.camera_rotation[1]),
-                             math.cos(self.camera_rotation[0]) * camera_cosy)
-        camera_pos = self.camera_offset + camera_pos * self.camera_distance
+        #camera_cosy = math.cos(self.camera_rotation[1])
+        #camera_pos = Vector3(math.sin(self.camera_rotation[0]) * camera_cosy,
+        #                     math.sin(self.camera_rotation[1]),
+        #                     math.cos(self.camera_rotation[0]) * camera_cosy)
+        camera_pos = Vector3(0.0, 0.0, 1.0)
+        camera_pos = camera_pos * self.camera_distance
 
-        return camera_pos, self.camera_offset, Vector3(0.0, -1.0, 0.0)
+        return camera_pos, Vector3(0.0, 0.0, 0.0), Vector3(0.0, 1.0, 0.0)
 
 
     def paint(self, canvas):
@@ -256,6 +271,11 @@ class IconRenderer:
             modelview_matrix = Matrix4x4.look_at(*self.calculate_camera())
             projection_matrix = Matrix4x4.perspective(80.0, float(size.Width) / float(size.Height), 0.1, 500.0)
             glUniformMatrix4fv(self._mvp_matrix_uni, 1, GL_FALSE, (projection_matrix * modelview_matrix).ctypes_array)
+
+            transform_matrix = Matrix4x4.rotate_x(self.camera_rotation[1])\
+                               * Matrix4x4.rotate_y(self.camera_rotation[0]) \
+                               * Matrix4x4.translate(self.camera_offset * -1.0)
+            glUniformMatrix4fv(self._transform_matrix_uni, 1, GL_FALSE, transform_matrix.ctypes_array)
 
             lighting_config = self.lighting_config if self.lighting_config is not None else self._default_lighting_config
             glUniform3fv(self._light_dir_uni, 3, lighting_config.light_dirs_data)
