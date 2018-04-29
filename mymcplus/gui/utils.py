@@ -38,6 +38,10 @@ def _get_icon_resource_as_images(name):
         images.append(wx.Image(f, wx.BITMAP_TYPE_ICO, i))
     return images
 
+def _get_png_resource(name):
+    data = resources.resources[name]
+    return wx.Image(io.BytesIO(data), wx.BITMAP_TYPE_PNG)
+
 def get_icon_resource(name):
     """Convert a Window ICO contained in a string to an IconBundle."""
 
@@ -68,5 +72,12 @@ def get_icon_resource_bmp(name, size):
             best = img
             best_size = sz
     img = best.Rescale(size[0], size[1], wx.IMAGE_QUALITY_HIGH)
+    return wx.Bitmap(img)
+
+
+def get_png_resource_bmp(name, size=None):
+    img = _get_png_resource(name)
+    if size is not None:
+        img = img.Rescale(size[0], size[1], wx.IMAGE_QUALITY_HIGH)
     return wx.Bitmap(img)
 

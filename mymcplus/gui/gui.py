@@ -71,7 +71,7 @@ def add_tool(toolbar, id, label, standard_art, ico):
 
     if bmp == wx.NullBitmap:
         tbsize = toolbar.GetToolBitmapSize()
-        bmp = utils.get_icon_resource_bmp(ico, tbsize)
+        bmp = utils.get_png_resource_bmp(ico, tbsize)
 
     return toolbar.AddTool(id, label, bmp, shortHelp = label)
 
@@ -123,7 +123,7 @@ class GuiFrame(wx.Frame):
         self.config = GuiConfig()
         self.title = title
 
-        self.SetIcons(utils.get_icon_resource("mc4.ico"))
+        self.SetIcon(wx.Icon(utils.get_png_resource_bmp("icon.png")))
 
         self.Bind(wx.EVT_MENU, self.evt_cmd_exit, id=self.ID_CMD_EXIT)
         self.Bind(wx.EVT_MENU, self.evt_cmd_open, id=self.ID_CMD_OPEN)
@@ -151,10 +151,10 @@ class GuiFrame(wx.Frame):
         self.toolbar = toolbar = self.GetToolBar()
         tbsize = (32, 32)
         toolbar.SetToolBitmapSize(tbsize)
-        add_tool(toolbar, self.ID_CMD_OPEN, "Open", wx.ART_FILE_OPEN, "mc2.ico")
+        add_tool(toolbar, self.ID_CMD_OPEN, "Open", wx.ART_FILE_OPEN, "open.png")
         toolbar.AddSeparator()
-        add_tool(toolbar, self.ID_CMD_IMPORT, "Import", None, "mc5b.ico")
-        add_tool(toolbar, self.ID_CMD_EXPORT, "Export", None, "mc6a.ico")
+        add_tool(toolbar, self.ID_CMD_IMPORT, "Import", None, "import.png")
+        add_tool(toolbar, self.ID_CMD_EXPORT, "Export", None, "export.png")
         toolbar.Realize()
 
         self.statusbar = self.CreateStatusBar(2, style=wx.STB_SIZEGRIP)
