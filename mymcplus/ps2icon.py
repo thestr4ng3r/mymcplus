@@ -106,7 +106,7 @@ class Icon:
         (magic,
          self.animation_shapes,
          self.tex_type,
-         _,
+         something,
          self.vertex_count) = _icon_hdr_struct.unpack_from(data, offset)
 
         if magic != _PS2_ICON_MAGIC:

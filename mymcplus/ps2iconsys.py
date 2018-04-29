@@ -159,7 +159,7 @@ class IconSys:
         self._title_line_offset = d[2]
         self.background_transparency = d[4]
 
-        self.bg_colors = (d[5:21], d[5:9], d[9:13], d[17:21])
+        self.bg_colors = (d[5:9], d[9:13], d[13:17], d[17:21])
 
         self.light_dirs = (d[21:25], d[25:29], d[29:33])
         self.light_colors = (d[33:37], d[37:41], d[41:45])

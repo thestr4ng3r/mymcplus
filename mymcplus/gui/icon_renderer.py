@@ -25,7 +25,7 @@ from .. import ps2icon
 
 _LIGHTS_COUNT = 3
 
-_glsl_vert = b"""
+_glsl_icon_vert = b"""
 #version 150
 
 uniform mat4 mvp_matrix_uni;
@@ -57,7 +57,7 @@ void main()
 }
 """
 
-_glsl_frag = b"""
+_glsl_icon_frag = b"""
 #version 150
 
 #define LIGHTS_COUNT """ + str(_LIGHTS_COUNT).encode("ascii") + b"""
@@ -97,12 +97,45 @@ void main()
 """
 
 
-_ATTRIB_VERTEX =    0
-_ATTRIB_NORMAL =    1
-_ATTRIB_UV =        2
-_ATTRIB_COLOR =     3
+_ATTRIB_ICON_VERTEX =    0
+_ATTRIB_ICON_NORMAL =    1
+_ATTRIB_ICON_UV =        2
+_ATTRIB_ICON_COLOR =     3
 
-_TEX_UNIT =         0
+_TEX_UNIT_ICON =         0
+
+
+_glsl_background_vert = b"""
+#version 150
+
+in vec2 vertex_attr;
+in vec4 color_attr;
+
+out vec4 color_var;
+
+void main()
+{
+    color_var = color_attr;
+    gl_Position = vec4(vertex_attr, 0.0, 1.0);
+}
+"""
+
+_glsl_background_frag = b"""
+#version 150
+
+in vec4 color_var;
+
+out vec4 color_out;
+
+void main()
+{
+    color_out = color_var;
+}
+"""
+
+
+_ATTRIB_BACKGROUND_VERTEX = 0
+_ATTRIB_BACKGROUND_COLOR =  1
 
 
 class IconRenderer:
@@ -150,6 +183,8 @@ class IconRenderer:
         self.camera_distance = 5.0
         self.camera_offset = Vector3(0.0, 0.0, 0.0)
 
+        self.background_color = (0.0, 0.0, 0.0)
+
         self._program = None
         self._vertex_vbo = None
         self._vertex_data = None
@@ -157,6 +192,11 @@ class IconRenderer:
         self._color_vbo = None
         self._vao = None
         self._texture = None
+
+        self._background_program = None
+        self._background_vertex_vbo = None
+        self._background_color_vbo = None
+        self._background_vao = None
 
         self._mvp_matrix_uni = -1
         self._transform_matrix_uni = -1
@@ -171,23 +211,43 @@ class IconRenderer:
         self._gl_initialized = True
 
         shader_vert = glCreateShader(GL_VERTEX_SHADER)
-        glShaderSource(shader_vert, [_glsl_vert])
+        glShaderSource(shader_vert, [_glsl_icon_vert])
         glCompileShader(shader_vert)
 
         shader_frag = glCreateShader(GL_FRAGMENT_SHADER)
-        glShaderSource(shader_frag, [_glsl_frag])
+        glShaderSource(shader_frag, [_glsl_icon_frag])
         glCompileShader(shader_frag)
 
         self._program = glCreateProgram()
-
-        glBindAttribLocation(self._program, _ATTRIB_VERTEX, "vertex_attr")
-        glBindAttribLocation(self._program, _ATTRIB_NORMAL, "normal_attr")
-        glBindAttribLocation(self._program, _ATTRIB_UV, "uv_attr")
-        glBindAttribLocation(self._program, _ATTRIB_COLOR, "color_attr")
-
+        glBindAttribLocation(self._program, _ATTRIB_ICON_VERTEX, "vertex_attr")
+        glBindAttribLocation(self._program, _ATTRIB_ICON_NORMAL, "normal_attr")
+        glBindAttribLocation(self._program, _ATTRIB_ICON_UV, "uv_attr")
+        glBindAttribLocation(self._program, _ATTRIB_ICON_COLOR, "color_attr")
         glAttachShader(self._program, shader_vert)
         glAttachShader(self._program, shader_frag)
         glLinkProgram(self._program)
+
+        log = glGetProgramInfoLog(self._program)
+        if log:
+            print("Failed to compile shader:")
+            print(log.decode("utf-8"))
+            self.failed = True
+            return
+
+        shader_vert = glCreateShader(GL_VERTEX_SHADER)
+        glShaderSource(shader_vert, [_glsl_background_vert])
+        glCompileShader(shader_vert)
+
+        shader_frag = glCreateShader(GL_FRAGMENT_SHADER)
+        glShaderSource(shader_frag, [_glsl_background_frag])
+        glCompileShader(shader_frag)
+
+        self._background_program = glCreateProgram()
+        glBindAttribLocation(self._background_program, _ATTRIB_BACKGROUND_VERTEX, "vertex_attr")
+        glBindAttribLocation(self._background_program, _ATTRIB_BACKGROUND_COLOR, "color_attr")
+        glAttachShader(self._background_program, shader_vert)
+        glAttachShader(self._background_program, shader_frag)
+        glLinkProgram(self._background_program)
 
         log = glGetProgramInfoLog(self._program)
         if log:
@@ -204,7 +264,7 @@ class IconRenderer:
 
         texture_uni = glGetUniformLocation(self._program, "texture_uni")
         glUseProgram(self._program)
-        glUniform1i(texture_uni, _TEX_UNIT)
+        glUniform1i(texture_uni, _TEX_UNIT_ICON)
 
         self._vao = glGenVertexArrays(1)
         glBindVertexArray(self._vao)
@@ -212,19 +272,19 @@ class IconRenderer:
         (self._vertex_vbo, self._normal_uv_vbo, self._color_vbo) = glGenBuffers(3)
 
         glBindBuffer(GL_ARRAY_BUFFER, self._vertex_vbo)
-        glVertexAttribPointer(_ATTRIB_VERTEX, 3, GL_SHORT, GL_FALSE, 0, c_void_p(0))
+        glVertexAttribPointer(_ATTRIB_ICON_VERTEX, 3, GL_SHORT, GL_FALSE, 0, c_void_p(0))
 
         glBindBuffer(GL_ARRAY_BUFFER, self._normal_uv_vbo)
-        glVertexAttribPointer(_ATTRIB_NORMAL, 3, GL_SHORT, GL_FALSE, 5*2, c_void_p(0))
-        glVertexAttribPointer(_ATTRIB_UV, 2, GL_SHORT, GL_FALSE, 5*2, c_void_p(3*2))
+        glVertexAttribPointer(_ATTRIB_ICON_NORMAL, 3, GL_SHORT, GL_FALSE, 5 * 2, c_void_p(0))
+        glVertexAttribPointer(_ATTRIB_ICON_UV, 2, GL_SHORT, GL_FALSE, 5 * 2, c_void_p(3 * 2))
 
         glBindBuffer(GL_ARRAY_BUFFER, self._color_vbo)
-        glVertexAttribPointer(_ATTRIB_COLOR, 4, GL_UNSIGNED_BYTE, GL_TRUE, 0, c_void_p(0))
+        glVertexAttribPointer(_ATTRIB_ICON_COLOR, 4, GL_UNSIGNED_BYTE, GL_TRUE, 0, c_void_p(0))
 
-        glEnableVertexAttribArray(_ATTRIB_VERTEX)
-        glEnableVertexAttribArray(_ATTRIB_NORMAL)
-        glEnableVertexAttribArray(_ATTRIB_UV)
-        glEnableVertexAttribArray(_ATTRIB_COLOR)
+        glEnableVertexAttribArray(_ATTRIB_ICON_VERTEX)
+        glEnableVertexAttribArray(_ATTRIB_ICON_NORMAL)
+        glEnableVertexAttribArray(_ATTRIB_ICON_UV)
+        glEnableVertexAttribArray(_ATTRIB_ICON_COLOR)
 
         self._texture = glGenTextures(1)
         glBindTexture(GL_TEXTURE_2D, self._texture)
@@ -234,6 +294,28 @@ class IconRenderer:
         glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE)
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE)
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB5_A1, ps2icon.TEXTURE_WIDTH, ps2icon.TEXTURE_HEIGHT, 0, GL_RGBA, GL_UNSIGNED_SHORT_1_5_5_5_REV, c_void_p(0))
+
+        self._background_vao = glGenVertexArrays(1)
+        glBindVertexArray(self._background_vao)
+
+        (self._background_vertex_vbo, self._background_color_vbo) = glGenBuffers(2)
+
+        glBindBuffer(GL_ARRAY_BUFFER, self._background_vertex_vbo)
+        background_vertex_data = [
+            -1.0, 1.0,
+            -1.0, -1.0,
+            1.0, 1.0,
+            1.0, -1.0
+        ]
+        glBufferData(GL_ARRAY_BUFFER, 8*4, (GLfloat * 8)(*background_vertex_data), GL_STATIC_DRAW)
+        glVertexAttribPointer(_ATTRIB_BACKGROUND_VERTEX, 2, GL_FLOAT, GL_FALSE, 0, c_void_p(0))
+
+        glBindBuffer(GL_ARRAY_BUFFER, self._background_color_vbo)
+        glBufferData(GL_ARRAY_BUFFER, 4*4, c_void_p(0), GL_DYNAMIC_DRAW)
+        glVertexAttribPointer(_ATTRIB_BACKGROUND_COLOR, 4, GL_UNSIGNED_BYTE, GL_TRUE, 0, c_void_p(0))
+
+        glEnableVertexAttribArray(_ATTRIB_BACKGROUND_VERTEX)
+        glEnableVertexAttribArray(_ATTRIB_BACKGROUND_COLOR)
 
 
     def calculate_camera(self):
@@ -328,19 +410,35 @@ class IconRenderer:
 
         glViewport(0, 0, size.Width, size.Height)
 
-        glClearColor(0.0, 0.0, 0.0, 1.0)
+        if self.background_color is not None:
+            glClearColor(*self.background_color, 1.0)
+        else:
+            glClearColor(0.0, 0.0, 0.0, 1.0)
+
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
+
+        if self.background_color is None and self._icon is not None:
+            glUseProgram(self._background_program)
+            glDisable(GL_DEPTH_TEST)
+            glDepthMask(GL_FALSE)
+
+            glBindVertexArray(self._background_vao)
+            glDrawArrays(GL_TRIANGLE_STRIP, 0, 4)
 
         if self._icon is not None:
             glUseProgram(self._program)
 
             glEnable(GL_DEPTH_TEST)
+            glDepthMask(GL_TRUE)
 
-            glActiveTexture(GL_TEXTURE0 + _TEX_UNIT)
+            glActiveTexture(GL_TEXTURE0 + _TEX_UNIT_ICON)
             glBindTexture(GL_TEXTURE_2D, self._texture)
 
             modelview_matrix = Matrix4x4.look_at(*self.calculate_camera())
-            projection_matrix = Matrix4x4.perspective(80.0, float(size.Width) / float(size.Height), 0.1, 500.0)
+            aspect = 1.0
+            if size.Height > 0:
+                aspect = float(size.Width) / float(size.Height)
+            projection_matrix = Matrix4x4.perspective(80.0, aspect, 0.1, 500.0)
             glUniformMatrix4fv(self._mvp_matrix_uni, 1, GL_FALSE, (projection_matrix * modelview_matrix).ctypes_array)
 
             transform_matrix = Matrix4x4.translate(self.camera_offset * -1.0) \
@@ -400,3 +498,15 @@ class IconRenderer:
         glBindTexture(GL_TEXTURE_2D, self._texture)
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB5_A1, ps2icon.TEXTURE_WIDTH, ps2icon.TEXTURE_HEIGHT, 0, GL_RGBA, GL_UNSIGNED_SHORT_1_5_5_5_REV, self._icon.texture)
         glGenerateMipmap(GL_TEXTURE_2D)
+
+        bg_colors = self._icon_sys.bg_colors
+        bg_alpha = self._icon_sys.background_transparency
+        colors = [int((c / 0x80) * 255) for c in [
+            *bg_colors[0][0:3], bg_alpha,
+            *bg_colors[2][0:3], bg_alpha,
+            *bg_colors[1][0:3], bg_alpha,
+            *bg_colors[3][0:3], bg_alpha]]
+
+        color_data = (GLubyte * (4*4))(*colors)
+        glBindBuffer(GL_ARRAY_BUFFER, self._background_color_vbo)
+        glBufferData(GL_ARRAY_BUFFER, 4*4, color_data, GL_DYNAMIC_DRAW)

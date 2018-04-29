@@ -69,12 +69,19 @@ class IconWindow(wx.Window):
     ID_CMD_LIGHT_ICON = 203
     ID_CMD_LIGHT_ALT1 = 204
     ID_CMD_LIGHT_ALT2 = 205
-    ID_CMD_CAMERA_RESET = 206
+    ID_CMD_BACKGROUND_ICON = 206
+    ID_CMD_BACKGROUND_BLACK = 207
+    ID_CMD_BACKGROUND_WHITE = 208
+    ID_CMD_CAMERA_RESET = 209
 
     light_options = {ID_CMD_LIGHT_NONE: lighting_none,
                      ID_CMD_LIGHT_ICON: lighting_icon,
                      ID_CMD_LIGHT_ALT1: lighting_alt1,
                      ID_CMD_LIGHT_ALT2: lighting_alt2}
+
+    background_options = {ID_CMD_BACKGROUND_ICON: None,
+                          ID_CMD_BACKGROUND_BLACK: (0.0, 0.0, 0.0),
+                          ID_CMD_BACKGROUND_WHITE: (1.0, 1.0, 1.0)}
 
 
     def append_menu_options(self, win, menu):
@@ -85,6 +92,10 @@ class IconWindow(wx.Window):
         menu.AppendRadioItem(IconWindow.ID_CMD_LIGHT_ALT1, "Alternate Lighting")
         menu.AppendRadioItem(IconWindow.ID_CMD_LIGHT_ALT2, "Alternate Lighting 2")
         menu.AppendSeparator()
+        menu.AppendRadioItem(IconWindow.ID_CMD_BACKGROUND_ICON, "Icon Background")
+        menu.AppendRadioItem(IconWindow.ID_CMD_BACKGROUND_BLACK, "Black Background")
+        menu.AppendRadioItem(IconWindow.ID_CMD_BACKGROUND_WHITE, "White Background")
+        menu.AppendSeparator()
         menu.Append(IconWindow.ID_CMD_CAMERA_RESET, "Reset Camera")
 
         win.Bind(wx.EVT_MENU, self.evt_menu_animate, id=IconWindow.ID_CMD_ANIMATE)
@@ -92,6 +103,10 @@ class IconWindow(wx.Window):
         win.Bind(wx.EVT_MENU, self.evt_menu_light, id=IconWindow.ID_CMD_LIGHT_ICON)
         win.Bind(wx.EVT_MENU, self.evt_menu_light, id=IconWindow.ID_CMD_LIGHT_ALT1)
         win.Bind(wx.EVT_MENU, self.evt_menu_light, id=IconWindow.ID_CMD_LIGHT_ALT2)
+
+        win.Bind(wx.EVT_MENU, self.evt_menu_background, id=IconWindow.ID_CMD_BACKGROUND_ICON)
+        win.Bind(wx.EVT_MENU, self.evt_menu_background, id=IconWindow.ID_CMD_BACKGROUND_BLACK)
+        win.Bind(wx.EVT_MENU, self.evt_menu_background, id=IconWindow.ID_CMD_BACKGROUND_WHITE)
 
         win.Bind(wx.EVT_MENU, self.evt_menu_camera, id=IconWindow.ID_CMD_CAMERA_RESET)
 
@@ -136,10 +151,12 @@ class IconWindow(wx.Window):
         self._animation_start_time = time.time()
 
         self.lighting_id = self.ID_CMD_LIGHT_ICON
+        self.background_id = self.ID_CMD_BACKGROUND_ICON
 
         self.menu = wx.Menu()
         self.append_menu_options(self, self.menu)
         self.set_lighting(self.lighting_id)
+        self.set_background(self.ID_CMD_BACKGROUND_ICON)
         self.reset_camera()
         self.set_animate(False)
 
@@ -166,6 +183,7 @@ class IconWindow(wx.Window):
 
         menu.Check(IconWindow.ID_CMD_ANIMATE, self._animate_icon)
         menu.Check(self.lighting_id, True)
+        menu.Check(self.background_id, True)
 
 
     def load_icon(self, icon_sys, icon_data):
@@ -193,6 +211,12 @@ class IconWindow(wx.Window):
     def set_lighting(self, id):
         self.lighting_id = id
         self._renderer.lighting_config = self.light_options[id]
+        self.canvas.Refresh(eraseBackground=False)
+
+
+    def set_background(self, id):
+        self.background_id = id
+        self._renderer.background_color = self.background_options[id]
         self.canvas.Refresh(eraseBackground=False)
 
 
@@ -302,6 +326,10 @@ class IconWindow(wx.Window):
 
     def evt_menu_light(self, event):
         self.set_lighting(event.GetId())
+
+
+    def evt_menu_background(self, event):
+        self.set_background(event.GetId())
 
 
     def evt_menu_camera(self, event):
