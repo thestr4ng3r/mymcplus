@@ -20,6 +20,28 @@ from .. import ps2mc_dir
 from .utils import *
 from ..round import round_up
 
+
+FORMAT_ID = "psu"
+
+
+def poll(hdr):
+    #
+    # EMS (.psu) save files don't have a magic number.  Check to
+    # see if it looks enough like one.
+    #
+
+    if len(hdr) < ps2mc_dir.PS2MC_DIRENT_LENGTH * 3:
+        return None
+
+    dirent = ps2mc_dir.unpack_dirent(hdr[:ps2mc_dir.PS2MC_DIRENT_LENGTH])
+    dotent = ps2mc_dir.unpack_dirent(hdr[ps2mc_dir.PS2MC_DIRENT_LENGTH : ps2mc_dir.PS2MC_DIRENT_LENGTH * 2])
+    dotdotent = ps2mc_dir.unpack_dirent(hdr[ps2mc_dir.PS2MC_DIRENT_LENGTH * 2:])
+
+    return ps2mc_dir.mode_is_dir(dirent[0]) and ps2mc_dir.mode_is_dir(dotent[0]) \
+            and ps2mc_dir.mode_is_dir(dotdotent[0]) and dirent[2] >= 2 \
+            and dotent[8] == b"." and dotdotent[8] == b".."
+
+
 def load(save, f):
     """Load EMS (.psu) save files."""
 

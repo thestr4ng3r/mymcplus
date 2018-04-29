@@ -26,7 +26,7 @@ from errno import EEXIST, EIO
 from . import ps2mc
 from .save import ps2save
 from .ps2mc_dir import *
-from .save import codebreaker, ems, max_drive, sharkport
+from .save import format_codebreaker, format_ems, format_max_drive, format_sharkport
 from . import verbuild
 from . import ps2iconsys
 
@@ -207,21 +207,13 @@ def do_import(cmd, mc, opts, args, opterr):
                "single savefile.")
         
     for filename in args:
-        sf = ps2save.ps2_save_file()
+        sf = ps2save.PS2SaveFile()
         f = open(filename, "rb")
         try:
-            ftype = ps2save.detect_file_type(f)
+            format = ps2save.poll_format(f)
             f.seek(0)
-            if ftype == "max":
-                max_drive.load(sf, f)
-            elif ftype == "psu":
-                ems.load(sf, f)
-            elif ftype == "cbs":
-                codebreaker.load(sf, f)
-            elif ftype == "sps":
-                sharkport.load(sf, f)
-            elif ftype == "npo":
-                raise io_error(EIO, "nPort saves are not supported.", filename)
+            if format is not None:
+                format.load(sf, f)
             else:
                 raise io_error(EIO, "Save file format not recognized", filename)
         finally:
@@ -279,9 +271,9 @@ def do_export(cmd, mc, opts, args, opterr):
             print("Exporing", dirname, "to", filename)
             
             if opts.type == "max":
-                max_drive.save(sf, f)
+                format_max_drive.save(sf, f)
             else:
-                ems.save(sf, f)
+                format_ems.save(sf, f)
         finally:
             f.close()
 

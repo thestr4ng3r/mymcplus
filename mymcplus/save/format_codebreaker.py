@@ -23,6 +23,8 @@ from .. import utils
 from .utils import *
 
 
+FORMAT_ID = "cbs"
+
 PS2SAVE_CBS_MAGIC = b"CFU\0"
 
 # This is the initial permutation state ("S") for the RC4 stream cipher
@@ -61,7 +63,7 @@ PS2SAVE_CBS_RC4S = [0x5f, 0x1f, 0x85, 0x6f, 0x31, 0xaa, 0x3b, 0x18,
             0x6b, 0x93, 0x32, 0x48, 0xb6, 0x30, 0x43, 0xa5]
 
 
-def rc4_crypt(s, t):
+def _rc4_crypt(s, t):
     """RC4 encrypt/decrypt the string t using the permutation s.
 
     Returns a byte array."""
@@ -75,6 +77,10 @@ def rc4_crypt(s, t):
         (s[i], s[j]) = (s[j], s[i])
         t[ii] ^= s[(s[i] + s[j]) % 256]
     return t
+
+
+def poll(hdr):
+    return hdr.startswith(PS2SAVE_CBS_MAGIC)
 
 
 def load(save, f):
@@ -105,7 +111,7 @@ def load(save, f):
     clen = len(body)
     if clen != flen and clen != flen - hlen:
         raise ps2save.Eof(f)
-    body = rc4_crypt(PS2SAVE_CBS_RC4S, body)
+    body = _rc4_crypt(PS2SAVE_CBS_RC4S, body)
     dcobj = zlib.decompressobj()
     body = dcobj.decompress(body, dlen)
 

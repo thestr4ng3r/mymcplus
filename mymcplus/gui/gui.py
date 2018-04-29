@@ -381,9 +381,11 @@ class GuiFrame(wx.Frame):
                 f = open(fn, "wb")
                 try:
                     if fn.endswith(".max"):
-                        sf.save_max_drive(f)
+                        from ..save import format_max_drive
+                        format_max_drive.save(sf, f)
                     else:
-                        sf.save_ems(f)
+                        from ..save import format_ems
+                        format_ems.save(sf, f)
                 finally:
                     f.close()
             except EnvironmentError as value:
@@ -418,26 +420,15 @@ class GuiFrame(wx.Frame):
 
 
     def _do_import(self, fn):
-        sf = ps2save.ps2_save_file()
+        sf = ps2save.PS2SaveFile()
         f = open(fn, "rb")
         try:
-            ft = ps2save.detect_file_type(f)
+            format = ps2save.poll_format(f)
             f.seek(0)
-            if ft == "max":
-                sf.load_max_drive(f)
-            elif ft == "psu":
-                sf.load_ems(f)
-            elif ft == "cbs":
-                sf.load_codebreaker(f)
-            elif ft == "sps":
-                sf.load_sharkport(f)
-            elif ft == "npo":
-                self.error_box(fn + ": nPort saves"
-                           " are not supported.")
-                return
+            if format is not None:
+                format.load(sf, f)
             else:
-                self.error_box(fn + ": Save file format not"
-                           " recognized.")
+                self.error_box(fn + ": Save file format not recognized.")
                 return
         finally:
             f.close()

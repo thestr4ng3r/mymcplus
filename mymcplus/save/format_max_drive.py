@@ -25,7 +25,13 @@ from ..round import round_up
 from .utils import *
 
 
+FORMAT_ID = "max"
+
 PS2SAVE_MAX_MAGIC = b"Ps2PowerSave"
+
+
+def poll(hdr):
+    return hdr.startswith(PS2SAVE_MAX_MAGIC)
 
 
 def load2(save, f):

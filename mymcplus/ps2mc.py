@@ -1561,7 +1561,7 @@ class ps2mc(object):
         if dir_dirloc == (0, 0):
             raise io_error(EACCES, "can't export root directory",
                      filename)
-        sf = ps2save.ps2_save_file()
+        sf = ps2save.PS2SaveFile()
         files = []
         f = None
         dir = self._directory(dir_dirloc, dirent[4], dirent[2],

@@ -20,7 +20,15 @@ from .. import utils
 from . import ps2save
 from .utils import *
 
+
+FORMAT_ID = "sps"
+
 PS2SAVE_SPS_MAGIC = b"\x0d\0\0\0SharkPortSave"
+
+
+def poll(hdr):
+    return hdr.startswith(PS2SAVE_SPS_MAGIC)
+
 
 def load(save, f):
     magic = f.read(17)

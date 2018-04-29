@@ -25,8 +25,15 @@ from ..ps2mc_dir import *
 from .. import ps2iconsys
 
 
-from . import codebreaker, ems, max_drive, sharkport
+from . import format_codebreaker, format_ems, format_max_drive, format_sharkport
 
+
+formats = [
+    format_codebreaker,
+    format_ems,
+    format_max_drive,
+    format_sharkport
+]
 
 
 class Error(Exception):
@@ -57,40 +64,21 @@ class Subdir(Corrupt):
         Corrupt.__init__(self, "Non-file in save file.", f)
 
 
-PS2SAVE_NPO_MAGIC = b"nPort"
-
-
-def detect_file_type(f):
+def poll_format(f):
     """Detect the type of PS2 save file.
 
     The file-like object f should be positioned at the start of the file.
     """
 
     hdr = f.read(PS2MC_DIRENT_LENGTH * 3)
-    if hdr[:12] == max_drive.PS2SAVE_MAX_MAGIC:
-        return "max"
-    if hdr[:17] == sharkport.PS2SAVE_SPS_MAGIC:
-        return "sps"
-    if hdr[:4] == codebreaker.PS2SAVE_CBS_MAGIC:
-        return "cbs"
-    if hdr[:5] == PS2SAVE_NPO_MAGIC:
-        return "npo"
-    #
-    # EMS (.psu) save files don't have a magic number.  Check to
-    # see if it looks enough like one.
-    #
-    if len(hdr) != PS2MC_DIRENT_LENGTH * 3:
-        return None
-    dirent = unpack_dirent(hdr[:PS2MC_DIRENT_LENGTH])
-    dotent = unpack_dirent(hdr[PS2MC_DIRENT_LENGTH
-                               : PS2MC_DIRENT_LENGTH * 2])
-    dotdotent = unpack_dirent(hdr[PS2MC_DIRENT_LENGTH * 2:])
-    if (mode_is_dir(dirent[0]) and mode_is_dir(dotent[0])
-            and mode_is_dir(dotdotent[0]) and dirent[2] >= 2
-            and dotent[8] == b"." and dotdotent[8] == b".."):
-        return "psu"
+
+    for format in formats:
+        if format.poll(hdr):
+            return format
 
     return None
+
+
 
 #
 # Set up tables of illegal and problematic characters in file names.
@@ -146,7 +134,7 @@ def make_longname(dirname, sf):
 
 
 
-class ps2_save_file(object):
+class PS2SaveFile(object):
     """The state of a PlayStation 2 save file."""
     
     def __init__(self):
@@ -154,6 +142,8 @@ class ps2_save_file(object):
         self.file_data = None
         self.dirent = None
         self._defer_load_max_file = None
+        self._compressed = None
+
 
     def set_directory(self, ent, defer_file = None):
         self._defer_load_max_file = defer_file
@@ -162,25 +152,31 @@ class ps2_save_file(object):
         self.file_data = [None] * ent[2]
         self.dirent = list(ent)
 
+
     def set_file(self, i, ent, data):
         self.file_ents[i] = ent
         self.file_data[i] = data
 
+
     def get_directory(self):
         return self.dirent
+
 
     def get_file(self, i):
         if self._defer_load_max_file is not None:
             f = self._defer_load_max_file
             self._defer_load_max_file = None
-            max_drive.load2(self, f)
-        return (self.file_ents[i], self.file_data[i])
+            format_max_drive.load2(self, f)
+        return self.file_ents[i], self.file_data[i]
+
 
     def __len__(self):
         return self.dirent[2]
 
+
     def __getitem__(self, index):
         return self.get_file(index)
+
     
     def get_icon_sys(self):
         for i in range(self.dirent[2]):
