@@ -221,6 +221,8 @@ class IconWindow(wx.Window):
 
 
     def evt_timer(self, _):
+        if self._icon is None or self._icon.animation_shapes <= 1:
+            return
         self.canvas.Refresh(eraseBackground=False)
 
 
