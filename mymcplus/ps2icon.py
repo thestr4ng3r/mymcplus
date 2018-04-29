@@ -122,19 +122,18 @@ class Icon:
         if length < offset + self.vertex_count * stride:
             raise FileTooSmall()
 
-        self.vertex_data = (int16_t * (3 * self.vertex_count))()
+        self.vertex_data = (int16_t * (self.animation_shapes * 3 * self.vertex_count))()
         self.normal_uv_data = (int16_t * (5 * self.vertex_count))()
         self.color_data = (uint8_t * (4 * self.vertex_count))()
 
         for i in range(self.vertex_count):
-            (self.vertex_data[i*3],
-             self.vertex_data[i*3+1],
-             self.vertex_data[i*3+2],
-             _) = _vertex_coords_struct.unpack_from(data, offset)
-
-            # TODO: read all shapes
-
-            offset += _vertex_coords_struct.size * self.animation_shapes
+            for s in range(self.animation_shapes):
+                vertex_offset = (s * self.vertex_count + i) * 3
+                (self.vertex_data[vertex_offset],
+                 self.vertex_data[vertex_offset+1],
+                 self.vertex_data[vertex_offset+2],
+                 _) = _vertex_coords_struct.unpack_from(data, offset)
+                offset += _vertex_coords_struct.size
 
             (self.normal_uv_data[i*5],
              self.normal_uv_data[i*5+1],
