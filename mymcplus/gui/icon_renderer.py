@@ -16,10 +16,11 @@
 #
 
 from ctypes import c_void_p
+import time
 from OpenGL.GL import *
 from .linalg import Matrix4x4, Vector3
 
-from ..ps2icon import TEXTURE_WIDTH, TEXTURE_HEIGHT
+from .. import ps2icon
 
 
 _LIGHTS_COUNT = 3
@@ -95,12 +96,14 @@ void main()
 }
 """
 
+
 _ATTRIB_VERTEX =    0
 _ATTRIB_NORMAL =    1
 _ATTRIB_UV =        2
 _ATTRIB_COLOR =     3
 
 _TEX_UNIT =         0
+
 
 class IconRenderer:
     """Render a save file's 3D icon with OpenGL."""
@@ -149,6 +152,7 @@ class IconRenderer:
 
         self._program = None
         self._vertex_vbo = None
+        self._vertex_data = None
         self._normal_uv_vbo = None
         self._color_vbo = None
         self._vao = None
@@ -229,7 +233,7 @@ class IconRenderer:
         glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE)
         glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE)
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE)
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB5_A1, TEXTURE_WIDTH, TEXTURE_HEIGHT, 0, GL_RGBA, GL_UNSIGNED_SHORT_1_5_5_5_REV, c_void_p(0))
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB5_A1, ps2icon.TEXTURE_WIDTH, ps2icon.TEXTURE_HEIGHT, 0, GL_RGBA, GL_UNSIGNED_SHORT_1_5_5_5_REV, c_void_p(0))
 
 
     def calculate_camera(self):
@@ -239,7 +243,79 @@ class IconRenderer:
         return camera_pos, Vector3(0.0, 0.0, 0.0), Vector3(0.0, 1.0, 0.0)
 
 
-    def paint(self, canvas):
+    def _write_animated_vertices(self, anim_time, vertex_data):
+        duration = float(self._icon.frame_length)
+        if duration > 0.0:
+            anim_time = ((time.time() - anim_time) * 8.0) % duration
+        else:
+            anim_time = 0.0
+
+        shape_values = {}
+
+        for frame in self._icon.frames:
+            keys = frame.keys
+            if frame.shape_id == 0:
+                k = ps2icon.Icon.Frame.Key()
+                k.time = 0.0
+                k.value = 1.0
+                keys.append(k)
+
+            last = None
+            last_time = 0.0
+            next = None
+            next_time = 0.0
+
+            for key in keys:
+                t = key.time if key.time <= anim_time else key.time - duration
+                if last is None or t > last_time:
+                    last = key
+                    last_time = t
+
+                t = key.time if key.time >= anim_time else key.time + duration
+                if next is None or t < next_time:
+                    next = key
+                    next_time = t
+
+            if next_time > last_time:
+                progress = (anim_time - last_time) / (next_time - last_time)
+            else:
+                progress = 0.0
+
+            if last is not None and next is not None:
+                shape_values[frame.shape_id] = (1.0 - progress) * last.value + progress * next.value
+
+        if shape_values == {}:
+            shape_values = {0: 1.0}
+
+        sum = 0.0
+        for shape_id, value in shape_values.items():
+            sum += value
+
+        if sum <= 0.0:
+            shape_values = {0: 1.0}
+        else:
+            for shape_id in shape_values:
+                shape_values[shape_id] /= sum
+
+        for i in range(3 * self._icon.vertex_count):
+            acc = 0.0
+            for shape_id, value in shape_values.items():
+                acc += value * self._icon.vertex_data[shape_id * 3 * self._icon.vertex_count + i]
+            vertex_data[i] = int(acc)
+
+
+    def _update_vertex_vbo(self, anim_time):
+        if anim_time is not None:
+            self._write_animated_vertices(anim_time, self._vertex_data)
+            vertex_data = self._vertex_data
+        else:
+            vertex_data = self._icon.vertex_data
+
+        glBindBuffer(GL_ARRAY_BUFFER, self._vertex_vbo)
+        glBufferData(GL_ARRAY_BUFFER, self._icon.vertex_count * 3 * 2, vertex_data, GL_DYNAMIC_DRAW)
+
+
+    def paint(self, canvas, animation_time):
         self.context.SetCurrent(canvas)
 
         if not self._gl_initialized:
@@ -281,11 +357,9 @@ class IconRenderer:
             glEnable(GL_BLEND)
             glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
 
+            self._update_vertex_vbo(animation_time)
+
             glBindVertexArray(self._vao)
-
-            glBindBuffer(GL_ARRAY_BUFFER, self._vertex_vbo)
-            glVertexAttribPointer(_ATTRIB_VERTEX, 3, GL_SHORT, GL_FALSE, 0, c_void_p(0))
-
             glDrawArrays(GL_TRIANGLES, 0, self._icon.vertex_count)
 
         canvas.SwapBuffers()
@@ -305,9 +379,11 @@ class IconRenderer:
 
         glBindBuffer(GL_ARRAY_BUFFER, self._vertex_vbo)
         glBufferData(GL_ARRAY_BUFFER,
-                     self._icon.vertex_count * self._icon.animation_shapes * 3 * 2,
-                     self._icon.vertex_data,
-                     GL_STATIC_DRAW)
+                     self._icon.vertex_count * 3 * 2,
+                     c_void_p(0),
+                     GL_DYNAMIC_DRAW)
+
+        self._vertex_data = (GLshort * (self._icon.vertex_count * 3))()
 
         glBindBuffer(GL_ARRAY_BUFFER, self._normal_uv_vbo)
         glBufferData(GL_ARRAY_BUFFER,
@@ -322,14 +398,5 @@ class IconRenderer:
                      GL_STATIC_DRAW)
 
         glBindTexture(GL_TEXTURE_2D, self._texture)
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB5_A1, TEXTURE_WIDTH, TEXTURE_HEIGHT, 0, GL_RGBA, GL_UNSIGNED_SHORT_1_5_5_5_REV, self._icon.texture)
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB5_A1, ps2icon.TEXTURE_WIDTH, ps2icon.TEXTURE_HEIGHT, 0, GL_RGBA, GL_UNSIGNED_SHORT_1_5_5_5_REV, self._icon.texture)
         glGenerateMipmap(GL_TEXTURE_2D)
-
-
-    def set_animate(self, animate):
-        #if self.failed:
-        #    return
-        #self.config.animate = animate
-        #if mymcsup.set_config(self.config) == -1:
-        #    self.failed = True
-        pass

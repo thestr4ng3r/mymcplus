@@ -15,6 +15,7 @@
 # along with mymc+.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+import time
 import wx
 from wx import glcanvas
 
@@ -77,7 +78,7 @@ class IconWindow(wx.Window):
 
 
     def append_menu_options(self, win, menu):
-        menu.AppendCheckItem(IconWindow.ID_CMD_ANIMATE, "Animate Icons")
+        menu.AppendCheckItem(IconWindow.ID_CMD_ANIMATE, "Animate Icon")
         menu.AppendSeparator()
         menu.AppendRadioItem(IconWindow.ID_CMD_LIGHT_NONE, "Lighting Off")
         menu.AppendRadioItem(IconWindow.ID_CMD_LIGHT_ICON, "Icon Lighting")
@@ -130,12 +131,17 @@ class IconWindow(wx.Window):
         self._camera_dragging_offset = False
         self._last_mouse_pos = None
 
+        self._animate_icon = False
+        self._timer = None
+        self._animation_start_time = time.time()
+
         self.lighting_id = self.ID_CMD_LIGHT_ICON
 
         self.menu = wx.Menu()
         self.append_menu_options(self, self.menu)
         self.set_lighting(self.lighting_id)
         self.reset_camera()
+        self.set_animate(False)
 
         self.Bind(wx.EVT_CONTEXT_MENU, self.evt_context_menu)
         self.canvas.Bind(wx.EVT_LEFT_DOWN, self.evt_mouse_left_down)
@@ -147,13 +153,18 @@ class IconWindow(wx.Window):
 
 
     def paint(self, _):
-        self._renderer.paint(self.canvas)
+        anim_time = None
+
+        if self._animate_icon:
+            anim_time = (time.time() - self._animation_start_time) * 8.0
+
+        self._renderer.paint(self.canvas, anim_time)
 
 
     def update_menu(self, menu):
         """Update the content menu according to the current config."""
 
-        menu.Check(IconWindow.ID_CMD_ANIMATE, False)#self.config.animate)
+        menu.Check(IconWindow.ID_CMD_ANIMATE, self._animate_icon)
         menu.Check(self.lighting_id, True)
 
 
@@ -186,18 +197,30 @@ class IconWindow(wx.Window):
 
 
     def set_animate(self, animate):
-        #if self.failed:
-        #    return
-        #self.config.animate = animate
-        #if mymcsup.set_config(self.config) == -1:
-        #    self.failed = True
-        pass
+        self._animate_icon = animate
+
+        if animate:
+            if self._timer is None:
+                self._animation_start_time = time.time()
+                self._timer = wx.Timer(self)
+                self._timer.Start(16)
+                self.Bind(wx.EVT_TIMER, self.evt_timer, self._timer)
+        elif self._timer is not None:
+            self._timer.Stop()
+            self._timer.Destroy()
+            self._timer = None
+
+        self.canvas.Refresh(eraseBackground=False)
 
 
     def reset_camera(self):
         self._renderer.camera_offset = Vector3(0.0, 2.5, 0.0)
         self._renderer.camera_rotation = (0.0, 0.0)
         self._renderer.camera_distance = 5.0
+        self.canvas.Refresh(eraseBackground=False)
+
+
+    def evt_timer(self, _):
         self.canvas.Refresh(eraseBackground=False)
 
 
@@ -213,6 +236,7 @@ class IconWindow(wx.Window):
     def evt_mouse_middle_down(self, event):
         self._camera_dragging_offset = True
         self._last_mouse_pos = event.GetPosition()
+
 
     def evt_mouse_middle_up(self, event):
         self._camera_dragging_offset = False
@@ -271,8 +295,7 @@ class IconWindow(wx.Window):
 
 
     def evt_menu_animate(self, event):
-        #self.set_animate(not self.config.animate)
-        pass
+        self.set_animate(not self._animate_icon)
 
 
     def evt_menu_light(self, event):
