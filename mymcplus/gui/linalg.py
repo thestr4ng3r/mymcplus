@@ -69,7 +69,7 @@ class Vector3:
 
 
     def __mul__(self, other):
-        if other is Vector3:
+        if isinstance(other, Vector3):
             return Vector3(self.v[0] * other[0],
                            self.v[1] * other[1],
                            self.v[2] * other[2])

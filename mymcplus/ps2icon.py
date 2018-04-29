@@ -86,6 +86,7 @@ class Icon:
         self.play_offset = 0
         self.frame_count = 0
         self.texture = None
+        self.enable_alpha = False
 
         length = len(data)
         offset = 0
@@ -145,6 +146,12 @@ class Icon:
              self.color_data[i*4+1],
              self.color_data[i*4+2],
              self.color_data[i*4+3]) = _normal_uv_color_struct.unpack_from(data, offset)
+
+            # This is just a hack to check if every alpha value is 0, which is the case for THPS3 for example.
+            # Alpha will then be assumed to be 1 for all vertices when rendering, otherwise nothing will be visible.
+            # TODO: There is probably another way to render these icons correctly.
+            if self.color_data[i*4+3] > 0:
+                self.enable_alpha = True
 
             offset += _normal_uv_color_struct.size
 

@@ -422,6 +422,9 @@ class IconRenderer:
             glDisable(GL_DEPTH_TEST)
             glDepthMask(GL_FALSE)
 
+            glEnable(GL_BLEND)
+            glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
+
             glBindVertexArray(self._background_vao)
             glDrawArrays(GL_TRIANGLE_STRIP, 0, 4)
 
@@ -441,9 +444,10 @@ class IconRenderer:
             projection_matrix = Matrix4x4.perspective(80.0, aspect, 0.1, 500.0)
             glUniformMatrix4fv(self._mvp_matrix_uni, 1, GL_FALSE, (projection_matrix * modelview_matrix).ctypes_array)
 
-            transform_matrix = Matrix4x4.translate(self.camera_offset * -1.0) \
+            transform_matrix = Matrix4x4.translate(self.camera_offset * -1.0 + Vector3(0.0, 2.5, 0.0)) \
                                * Matrix4x4.rotate_x(self.camera_rotation[1]) \
-                               * Matrix4x4.rotate_y(self.camera_rotation[0])
+                               * Matrix4x4.rotate_y(self.camera_rotation[0]) \
+                               * Matrix4x4.translate(Vector3(0.0, -2.5, 0.0))
             glUniformMatrix4fv(self._transform_matrix_uni, 1, GL_FALSE, transform_matrix.ctypes_array)
 
             lighting_config = self.lighting_config if self.lighting_config is not None else self._default_lighting_config
@@ -452,8 +456,12 @@ class IconRenderer:
             glUniform3fv(self._ambient_light_color_uni, 1, lighting_config.ambient_color_data)
 
             glEnable(GL_CULL_FACE)
-            glEnable(GL_BLEND)
-            glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
+
+            if self._icon.enable_alpha:
+                glEnable(GL_BLEND)
+                glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
+            else:
+                glDisable(GL_BLEND)
 
             self._update_vertex_vbo(animation_time)
 
