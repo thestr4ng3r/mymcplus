@@ -15,7 +15,6 @@
 # along with mymc+.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-import math
 from ctypes import c_void_p
 from OpenGL.GL import *
 from .linalg import Matrix4x4, Vector3
@@ -234,10 +233,6 @@ class IconRenderer:
 
 
     def calculate_camera(self):
-        #camera_cosy = math.cos(self.camera_rotation[1])
-        #camera_pos = Vector3(math.sin(self.camera_rotation[0]) * camera_cosy,
-        #                     math.sin(self.camera_rotation[1]),
-        #                     math.cos(self.camera_rotation[0]) * camera_cosy)
         camera_pos = Vector3(0.0, 0.0, 1.0)
         camera_pos = camera_pos * self.camera_distance
 
@@ -272,9 +267,9 @@ class IconRenderer:
             projection_matrix = Matrix4x4.perspective(80.0, float(size.Width) / float(size.Height), 0.1, 500.0)
             glUniformMatrix4fv(self._mvp_matrix_uni, 1, GL_FALSE, (projection_matrix * modelview_matrix).ctypes_array)
 
-            transform_matrix = Matrix4x4.rotate_x(self.camera_rotation[1])\
-                               * Matrix4x4.rotate_y(self.camera_rotation[0]) \
-                               * Matrix4x4.translate(self.camera_offset * -1.0)
+            transform_matrix = Matrix4x4.translate(self.camera_offset * -1.0) \
+                               * Matrix4x4.rotate_x(self.camera_rotation[1]) \
+                               * Matrix4x4.rotate_y(self.camera_rotation[0])
             glUniformMatrix4fv(self._transform_matrix_uni, 1, GL_FALSE, transform_matrix.ctypes_array)
 
             lighting_config = self.lighting_config if self.lighting_config is not None else self._default_lighting_config
@@ -282,9 +277,15 @@ class IconRenderer:
             glUniform3fv(self._light_color_uni, 3, lighting_config.light_colors_data)
             glUniform3fv(self._ambient_light_color_uni, 1, lighting_config.ambient_color_data)
 
-            glDisable(GL_CULL_FACE)
+            glEnable(GL_CULL_FACE)
+            glEnable(GL_BLEND)
+            glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
 
             glBindVertexArray(self._vao)
+
+            glBindBuffer(GL_ARRAY_BUFFER, self._vertex_vbo)
+            glVertexAttribPointer(_ATTRIB_VERTEX, 3, GL_SHORT, GL_FALSE, 0, c_void_p(0))
+
             glDrawArrays(GL_TRIANGLES, 0, self._icon.vertex_count)
 
         canvas.SwapBuffers()
@@ -304,7 +305,7 @@ class IconRenderer:
 
         glBindBuffer(GL_ARRAY_BUFFER, self._vertex_vbo)
         glBufferData(GL_ARRAY_BUFFER,
-                     self._icon.vertex_count * 3 * 2,
+                     self._icon.vertex_count * self._icon.animation_shapes * 3 * 2,
                      self._icon.vertex_data,
                      GL_STATIC_DRAW)
 
@@ -325,20 +326,10 @@ class IconRenderer:
         glGenerateMipmap(GL_TEXTURE_2D)
 
 
-
-
     def set_animate(self, animate):
         #if self.failed:
         #    return
         #self.config.animate = animate
-        #if mymcsup.set_config(self.config) == -1:
-        #    self.failed = True
-        pass
-
-    def set_camera(self, camera):
-        #if self.failed:
-        #    return
-        #self.config.camera = mymcsup.D3DXVECTOR3(*camera)
         #if mymcsup.set_config(self.config) == -1:
         #    self.failed = True
         pass
