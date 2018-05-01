@@ -32,3 +32,7 @@ def read_long_string(f):
 
     length = struct.unpack("<L", read_fixed(f, 4))[0]
     return read_fixed(f, length)
+
+
+def read_struct(f, s):
+    return s.unpack(read_fixed(f, s.size))

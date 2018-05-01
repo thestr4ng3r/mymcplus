@@ -47,10 +47,10 @@ def load(save, f):
 
     cluster_size = 1024
 
-    dirent = ps2save.unpack_dirent(read_fixed(f, ps2mc_dir.PS2MC_DIRENT_LENGTH))
-    dotent = ps2save.unpack_dirent(read_fixed(f, ps2mc_dir.PS2MC_DIRENT_LENGTH))
+    dirent = ps2mc_dir.unpack_dirent(read_fixed(f, ps2mc_dir.PS2MC_DIRENT_LENGTH))
+    dotent = ps2mc_dir.unpack_dirent(read_fixed(f, ps2mc_dir.PS2MC_DIRENT_LENGTH))
     dotdotent = ps2save.unpack_dirent(read_fixed(f, ps2mc_dir.PS2MC_DIRENT_LENGTH))
-    if (not ps2save.mode_is_dir(dirent[0])
+    if (not ps2mc_dir.mode_is_dir(dirent[0])
             or not ps2save.mode_is_dir(dotent[0])
             or not ps2save.mode_is_dir(dotdotent[0])
             or dirent[2] < 2):

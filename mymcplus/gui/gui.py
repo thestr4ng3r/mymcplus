@@ -443,8 +443,8 @@ class GuiFrame(wx.Frame):
         dir = self.config.get_savefile_dir("")
         fd = wx.FileDialog(self, "Import Save File", dir,
                    wildcard = ("PS2 save files"
-                           " (.cbs;.psu;.max;.sps;.xps)"
-                           "|*.cbs;*.psu;*.max;*.sps;*.xps"
+                           " (.cbs;.psu;.psv;.max;.sps;.xps)"
+                           "|*.cbs;*.psu;.psv;*.max;*.sps;*.xps"
                            "|All files|*.*"),
                    style = (wx.FD_OPEN | wx.FD_MULTIPLE
                         | wx.FD_FILE_MUST_EXIST))

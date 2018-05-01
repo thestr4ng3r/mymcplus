@@ -25,14 +25,15 @@ from ..ps2mc_dir import *
 from .. import ps2iconsys
 
 
-from . import format_codebreaker, format_ems, format_max_drive, format_sharkport
+from . import format_codebreaker, format_ems, format_max_drive, format_sharkport, format_psv
 
 
 formats = [
     format_codebreaker,
     format_ems,
     format_max_drive,
-    format_sharkport
+    format_sharkport,
+    format_psv
 ]
 
 

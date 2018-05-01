@@ -16,12 +16,13 @@
 #
 
 __all__ = [
-    "format_codebreaker.py",
-    "format_ems.py",
-    "lzari",
-    "format_max_drive.py",
+    "format_codebreaker",
+    "format_ems",
+    "format_max_drive",
+    "format_sharkport",
+    "format_psv",
     "ps2save",
-    "format_sharkport.py",
+    "lzari",
     "utils"
 ]
 
