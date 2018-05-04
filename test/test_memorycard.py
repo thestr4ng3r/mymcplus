@@ -381,3 +381,23 @@ def test_import_cbs(monkeypatch, capsys, data, mc02_copy):
     assert output.err == ""
 
     assert md5(mc_file) == "897b0fbd1965dc02a442e1723bd3df27"
+
+
+def test_import_psv_ps2(monkeypatch, capsys, data, mc02_copy):
+    from mymcplus import ps2mc
+    from mymcplus import ps2mc_dir
+    patch_fixed_time(monkeypatch, ps2mc)
+    patch_fixed_time(monkeypatch, ps2mc_dir)
+
+    mc_file = mc02_copy.join("mc02.ps2").strpath
+    psv_file = data.join("BESCES-5050152455A.PSV").strpath
+
+    mymc.main(["mymcplus",
+               "-i", mc_file,
+               "import", psv_file])
+
+    output = capsys.readouterr()
+    assert output.out == "Importing " + psv_file + " to BESCES-50501REZ\n"
+    assert output.err == ""
+
+    assert md5(mc_file) == "2872c456bcb647e78aeb3ce29e718309"
