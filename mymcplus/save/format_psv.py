@@ -34,6 +34,8 @@ _ps2_header_struct = struct.Struct("<IIIIIIIIII")
 _ps2_file_info_struct = struct.Struct("<8s8sII32s")
 _ps2_file_offset_struct = struct.Struct("<I")
 
+_ps1_header_struct = struct.Struct("<II20xI4x20s12x")
+
 
 class PS2FileInfo:
     def __init__(self, d):
@@ -86,9 +88,18 @@ def load_ps2(save, f):
         save.set_file(i, file_info.dirent(0), utils.read_fixed(f, file_info.size))
 
 
-
 def load_ps1(save, f):
-    raise NotImplementedError()
+    (save_size, save_offset, _, prod_code) = utils.read_struct(f, _ps1_header_struct)
+
+    dir_mode = ps2mc_dir.DF_RWX | ps2mc_dir.DF_DIR | ps2mc_dir.DF_PSX | ps2mc_dir.DF_EXISTS
+    created = modified = ps2mc_dir.tod_now()
+    save.set_directory((dir_mode, 0, 1, created, 0, 0, modified, 0, prod_code))
+
+    mode = ps2mc_dir.DF_RWX | ps2mc_dir.DF_FILE \
+           | ps2mc_dir.DF_0080 | ps2mc_dir.DF_0400 | ps2mc_dir.DF_EXISTS
+    f.seek(save_offset)
+    save.set_file(0, (mode, 0, 0, created, 0, 0, modified, 0, prod_code),
+                  utils.read_fixed(f, save_size))
 
 
 def load(save, f):
