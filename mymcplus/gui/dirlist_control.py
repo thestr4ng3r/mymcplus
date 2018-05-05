@@ -15,7 +15,7 @@
 # along with mymc+.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-from enum import Enum
+from enum import Enum, IntEnum
 import wx
 
 from .. import ps2mc, ps2iconsys
@@ -30,6 +30,12 @@ def get_dialog_units(win):
 
 class DirListControl(wx.ListCtrl):
     """Lists all the save files in a memory card image."""
+
+    class Column(IntEnum):
+        DIRECTORY = 0
+        SIZE = 1
+        MODIFIED = 2
+        DESCRIPTION = 3
 
     class TableEntry:
         class Type(Enum):
@@ -118,14 +124,15 @@ class DirListControl(wx.ListCtrl):
 
 
     def evt_col_click(self, event):
-        col = event.Column
-        if col == 0:
+        col = self.Column(event.Column)
+
+        if col == self.Column.DIRECTORY:
             cmp = self.cmp_dir_name
-        elif col == 1:
+        elif col == self.Column.SIZE:
             cmp = self.cmp_dir_size
-        elif col == 2:
+        elif col == self.Column.MODIFIED:
             cmp = self.cmp_dir_modified
-        elif col == 3:
+        elif col == self.Column.DESCRIPTION:
             cmp = self.cmp_dir_title
         else:
             return
@@ -148,14 +155,21 @@ class DirListControl(wx.ListCtrl):
 
         self.ClearAll()
         self.selected = set()
-        self.InsertColumn(0, "Directory")
-        self.InsertColumn(1, "Size")
-        self.InsertColumn(2, "Modified")
-        self.InsertColumn(3, "Description")
-        li = self.GetColumn(1)
-        li.SetAlign(wx.LIST_FORMAT_RIGHT)
-        li.SetText("Size")
-        self.SetColumn(1, li)
+
+        columns = [
+            (self.Column.DIRECTORY,     "Directory",    None),
+            (self.Column.SIZE,          "Size",         wx.LIST_FORMAT_RIGHT),
+            (self.Column.MODIFIED,      "Modified",     None),
+            (self.Column.DESCRIPTION,   "Description",  None)
+        ]
+
+        for (id, title, align) in columns:
+            index = id.value
+            column = wx.ListItem()
+            column.SetText(title)
+            if align is not None:
+                column.SetAlign(align)
+            self.InsertColumn(index, column)
 
         self.update_dirtable(mc)
 

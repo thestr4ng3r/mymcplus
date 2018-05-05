@@ -355,7 +355,7 @@ class GuiFrame(wx.Frame):
         dirtable = self.dirlist.dirtable
         sfiles = []
         for i in selected:
-            dirname = dirtable[i][0][8].decode("ascii")
+            dirname = dirtable[i].dirent[8].decode("ascii")
             try:
                 sf = mc.export_save_file("/" + dirname)
                 longname = ps2save.make_longname(dirname, sf)
