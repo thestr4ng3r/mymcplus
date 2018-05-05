@@ -15,6 +15,7 @@
 # along with mymc+.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+from enum import Enum
 import wx
 
 from .. import ps2mc, ps2iconsys
@@ -30,9 +31,24 @@ def get_dialog_units(win):
 class DirListControl(wx.ListCtrl):
     """Lists all the save files in a memory card image."""
 
+    class TableEntry:
+        class Type(Enum):
+            PS2 = 0
+            PS1 = 1
+
+        def __init__(self, type, dirent, icon_sys, size, title):
+            self.type = type
+            self.dirent = dirent
+            self.icon_sys = icon_sys
+            self.size = size
+            self.title = title
+
+
     def __init__(self, parent, evt_focus, evt_select, config):
         self.config = config
         self.selected = set()
+        self.dirtable = []
+
         self.evt_select = evt_select
         wx.ListCtrl.__init__(self, parent, wx.ID_ANY,
                              style=wx.LC_REPORT)
@@ -40,6 +56,7 @@ class DirListControl(wx.ListCtrl):
         self.Bind(wx.EVT_LIST_ITEM_FOCUSED, evt_focus)
         self.Bind(wx.EVT_LIST_ITEM_SELECTED, self.evt_item_selected)
         self.Bind(wx.EVT_LIST_ITEM_DESELECTED, self.evt_item_deselected)
+
 
     def _update_dirtable(self, mc, dir):
         self.dirtable = table = []
@@ -49,18 +66,29 @@ class DirListControl(wx.ListCtrl):
         for ent in dir:
             if not ps2mc.mode_is_dir(ent[0]):
                 continue
-            dirname = "/" + ent[8].decode("ascii")
-            s = mc.get_icon_sys(dirname)
-            if s is None:
-                continue
-            size = mc.dir_size(dirname)
-            icon_sys = ps2iconsys.IconSys(s)
-            title = icon_sys.get_title(enc)
-            table.append((ent, s, size, title))
+
+            dirname = ent[8].decode("ascii")
+            dirpath = "/" + dirname
+
+            if ps2mc.mode_is_psx_dir(ent[0]):
+                type = self.TableEntry.Type.PS1
+                title = (dirname, "")
+                icon_sys = None
+            else:
+                type = self.TableEntry.Type.PS2
+                icon_sys_data = mc.get_icon_sys(dirpath)
+                if icon_sys_data is None:
+                    continue
+                icon_sys = ps2iconsys.IconSys(icon_sys_data)
+                title = icon_sys.get_title(enc)
+
+            size = mc.dir_size(dirpath)
+            table.append(self.TableEntry(type, ent, icon_sys, size, title))
+
 
     def update_dirtable(self, mc):
         self.dirtable = []
-        if mc == None:
+        if mc is None:
             return
         dir = mc.dir_open("/")
         try:
@@ -68,21 +96,26 @@ class DirListControl(wx.ListCtrl):
         finally:
             dir.close()
 
+
     def cmp_dir_name(self, i1, i2):
-        return self.dirtable[i1][0][8] > self.dirtable[i2][0][8]
+        return self.dirtable[i1].dirent[8] > self.dirtable[i2].dirent[8]
+
 
     def cmp_dir_title(self, i1, i2):
-        return self.dirtable[i1][3] > self.dirtable[i2][3]
+        return self.dirtable[i1].title > self.dirtable[i2].title
+
 
     def cmp_dir_size(self, i1, i2):
-        return self.dirtable[i1][2] > self.dirtable[i2][2]
+        return self.dirtable[i1].size > self.dirtable[i2].size
+
 
     def cmp_dir_modified(self, i1, i2):
-        m1 = list(self.dirtable[i1][0][6])
-        m2 = list(self.dirtable[i2][0][6])
+        m1 = list(self.dirtable[i1].dirent[6])
+        m2 = list(self.dirtable[i2].dirent[6])
         m1.reverse()
         m2.reverse()
         return m1 > m2
+
 
     def evt_col_click(self, event):
         col = event.Column
@@ -94,16 +127,20 @@ class DirListControl(wx.ListCtrl):
             cmp = self.cmp_dir_modified
         elif col == 3:
             cmp = self.cmp_dir_title
+        else:
+            return
         self.SortItems(cmp)
-        return
+
 
     def evt_item_selected(self, event):
         self.selected.add(event.GetData())
         self.evt_select(event)
 
+
     def evt_item_deselected(self, event):
         self.selected.discard(event.GetData())
         self.evt_select(event)
+
 
     def update(self, mc):
         """Update the ListCtrl according to the contents of the
@@ -128,14 +165,13 @@ class DirListControl(wx.ListCtrl):
             return
 
         for (i, a) in enumerate(self.dirtable):
-            (ent, icon_sys, size, title) = a
-            li = self.InsertItem(i, ent[8])
-            self.SetItem(li, 1, "%dK" % (size // 1024))
-            m = ent[6]
+            li = self.InsertItem(i, a.dirent[8])
+            self.SetItem(li, 1, "%dK" % (a.size // 1024))
+            m = a.dirent[6]
             m = ("%04d-%02d-%02d %02d:%02d"
                  % (m[5], m[4], m[3], m[2], m[1]))
             self.SetItem(li, 2, m)
-            self.SetItem(li, 3, utils.single_title(title))
+            self.SetItem(li, 3, utils.single_title(a.title))
             self.SetItemData(li, i)
 
         du = get_dialog_units(self)

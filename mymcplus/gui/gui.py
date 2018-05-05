@@ -295,24 +295,25 @@ class GuiFrame(wx.Frame):
         if self.icon_win is not None:
             self.icon_win.update_menu(self.icon_menu)
 
+
     def evt_dirlist_item_focused(self, event):
         if self.icon_win is None:
             return
 
         i = event.GetData()
-        (ent, icon_sys_data, size, title) = self.dirlist.dirtable[i]
-        self.info1.SetLabel(title[0])
-        self.info2.SetLabel(title[1])
+        entry = self.dirlist.dirtable[i]
+        self.info1.SetLabel(entry.title[0])
+        self.info2.SetLabel(entry.title[1])
 
-        icon_sys = ps2iconsys.IconSys(icon_sys_data)
-
+        icon_sys = entry.icon_sys
         mc = self.mc
-        if mc is None:
+
+        if mc is None or icon_sys is None:
             self.icon_win.load_icon(None, None)
             return
 
         try:
-            mc.chdir("/" + ent[8].decode("ascii"))
+            mc.chdir("/" + entry.dirent[8].decode("ascii"))
             f = mc.open(icon_sys.icon_file_normal, "rb")
             try:
                 icon = f.read()
@@ -324,6 +325,7 @@ class GuiFrame(wx.Frame):
             return
 
         self.icon_win.load_icon(icon_sys, icon)
+
 
     def evt_dirlist_select(self, event):
         self.toolbar.EnableTool(self.ID_CMD_IMPORT, self.mc != None)
