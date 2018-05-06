@@ -28,6 +28,72 @@ Here is an overview of most features:
 
 ![Screenshot](screenshot.png)
 
+## Installation
+
+mymc+ is available on [PyPI](https://pypi.org/project/mymcplus/).
+You can install it, including the GUI, using pip:
+
+```
+pip install mymcplus[GUI]
+```
+
+If you only wish to install the command line interface, simple omit the
+GUI extra:
+
+```
+pip install mymcplus
+```
+
+## Usage
+
+If the GUI component is installed (i.e. wxPython can be found), it can
+simply be started using the following command:
+
+```
+mymcplus
+```
+
+### Command Line Interface
+
+The command line interface can be used like this:
+
+```
+Usage: /usr/bin/mymcplus [-ih] memcard.ps2 command [...]
+
+Manipulate PS2 memory card images.
+
+Supported commands:
+   add: Add files to the memory card.
+   check: Check for file system errors.
+   clear: Clear mode flags on files and directories
+   delete: Recursively delete a directory (save file).
+   df: Display the amount free space.
+   dir: Display save file information.
+   export: Export save files from the memory card.
+   extract: Extract files from the memory card.
+   format: Creates a new memory card image.
+   gui: Starts the graphical user interface.
+   import: Import save files into the memory card.
+   ls: List the contents of a directory.
+   mkdir: Make directories.
+   remove: Remove files and directories.
+   set: Set mode flags on files and directories
+
+Options:
+  --version         show program's version number and exit
+  -h, --help        show this help message and exit
+  -i, --ignore-ecc  Ignore ECC errors while reading.
+```
+
+It is always necessary to specify the path to a memory card image
+with `-i <path>` first. For example:
+
+```
+mymcplus -i empty.ps2 format
+```
+
+creates the file `empty.ps2` and formats it as an empty memory card.
+
 ## License
 
 mymc+  
