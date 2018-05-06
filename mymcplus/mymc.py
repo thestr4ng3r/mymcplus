@@ -26,7 +26,7 @@ from errno import EEXIST, EIO
 from . import ps2mc
 from .save import ps2save
 from .ps2mc_dir import *
-from .save import format_codebreaker, format_ems, format_max_drive, format_sharkport
+from .save import format_codebreaker, format_ems, format_max_drive, format_sharkport, format_psv
 from . import verbuild
 from . import ps2iconsys
 
@@ -236,22 +236,20 @@ def do_export(cmd, mc, opts, args, opterr):
         opterr("The -i and -f options are mutually exclusive.")
         
     args = glob_args(args, mc.glob)
-    if opts.output_file != None:
+    if opts.output_file is not None:
         if len(args) > 1:
-            opterr("Only one directory can be exported"
-                   " when the -o option is used.")
+            opterr("Only one directory can be exported when the -o option is used.")
         if opts.longnames:
             opterr("The -o and -l options are mutually exclusive.")
 
-    if opts.directory != None:
+    if opts.directory is not None:
         os.chdir(opts.directory)
         
     for dirname in args:
         sf = mc.export_save_file(dirname)
         filename = opts.output_file
         if opts.longnames:
-            filename = (ps2save.make_longname(dirname, sf)
-                    + "." + opts.type)
+            filename = (ps2save.make_longname(dirname, sf) + "." + opts.type)
         if filename == None:
             filename = dirname + "." + opts.type
                 
@@ -272,6 +270,8 @@ def do_export(cmd, mc, opts, args, opterr):
             
             if opts.type == "max":
                 format_max_drive.save(sf, f)
+            elif opts.type == "psv":
+                format_psv.save(sf, f)
             else:
                 format_ems.save(sf, f)
         finally:
@@ -570,7 +570,11 @@ cmd_table = {
             help = "Use the EMS .psu save file format. [default]"),
             opt("-m", "--max-drive", action = "store_const",
             dest = "type", const = "max",
-            help = "Use the MAX Drive save file format.")]),
+            help = "Use the MAX Drive save file format."),
+            #opt("-s", "--psv", action="store_const",
+            #dest="type", const="psv",
+            #help="Use the PSV (PlayStation 3) save file format.")
+            ]),
     "delete": (do_delete, "r+b",
            "dirname ...",
            "Recursively delete a directory (save file).",

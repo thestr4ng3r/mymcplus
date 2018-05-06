@@ -1552,36 +1552,31 @@ class ps2mc(object):
 
     def export_save_file(self, filename):
         (dir_dirloc, dirent, is_dir) = self.path_search(filename)
-        if dir_dirloc == None:
+        if dir_dirloc is None:
             raise path_not_found(filename)
-        if dirent == None:
+        if dirent is None:
             raise dir_not_found(filename)
         if not is_dir:
             raise io_error(ENOTDIR, "not a directory", filename)
         if dir_dirloc == (0, 0):
-            raise io_error(EACCES, "can't export root directory",
-                     filename)
+            raise io_error(EACCES, "can't export root directory", filename)
         sf = ps2save.PS2SaveFile()
         files = []
         f = None
-        dir = self._directory(dir_dirloc, dirent[4], dirent[2],
-                      "rb", filename)
+        dir = self._directory(dir_dirloc, dirent[4], dirent[2], "rb", filename)
         try:
             for i in range(2, dirent[2]):
                 ent = dir[i]
                 if not mode_is_file(ent[0]):
-                    print ("warning: %s/%s is not a file,"
-                           " ingored."
-                           % (dirent[8], ent[8]))
+                    print ("warning: %s/%s is not a file, ingored." % (dirent[8], ent[8]))
                     continue
-                f = self.file((dirent[4], i), ent[4], ent[2],
-                          "rb")
+                f = self.file((dirent[4], i), ent[4], ent[2], "rb")
                 data = f.read(ent[2])
                 f.close()
                 assert len(data) == ent[2]
                 files.append((ent, data))
         finally:
-            if f != None:
+            if f is not None:
                 f.close()
             dir.close()
         dirent[2] = len(files)

@@ -28,7 +28,7 @@ FORMAT_ID = "psv"
 PSV_MAGIC = b"\x00VSP"
 
 
-_psv_header_struct = struct.Struct("<4sI40sIIII")
+_psv_header_struct = struct.Struct("<4sI40s8xII")
 
 _ps2_header_struct = struct.Struct("<IIIIIIIIII")
 _ps2_file_info_struct = struct.Struct("<8s8sII32s")
@@ -103,7 +103,7 @@ def load_ps1(save, f):
 
 
 def load(save, f):
-    (magic, version, signature, _, _, _, save_type) = utils.read_struct(f, _psv_header_struct)
+    (magic, version, signature, _, save_type) = utils.read_struct(f, _psv_header_struct)
 
     if magic != PSV_MAGIC:
         raise ps2save.Corrupt("Not a PSV file.", f)
@@ -121,5 +121,29 @@ def load(save, f):
         raise ps2save.Corrupt("PSV save type {} not recognized.".format(save_type))
 
 
-def save(save, f):
+def save_ps2(save, f):
+#    f.write(_psv_header_struct.pack(PSV_MAGIC,
+#                                    0, # version
+#                                    b"\x00" * 40, # TODO: signature
+#                                    0x2c, # size of next section?
+#                                    2)) # PS2
+#
+#    dirent = save.dirent
+#    files_count = dirent[2]
+#
+#    base_offset = _psv_header_struct.size + _ps2_header_struct.size \
+#                  + _ps2_file_info_struct.size * (files_count + 1) \
+#                  + _ps2_file_offset_struct.size * files_count
+#
     raise NotImplementedError()
+
+
+def save_ps1(save, f):
+    raise NotImplementedError()
+
+
+def save(save, f):
+    if ps2mc_dir.mode_is_psx_dir(save.dirent[0]):
+        save_ps1(save, f)
+    else:
+        save_ps2(save, f)

@@ -80,6 +80,15 @@ def poll_format(f):
     return None
 
 
+def format_for_filename(filename):
+    filename = filename.lower()
+    if filename.endswith(".max"):
+        return format_max_drive
+    #elif filename.endswith(".psv"):
+    #    return format_psv
+    else:
+        return format_ems
+
 
 #
 # Set up tables of illegal and problematic characters in file names.

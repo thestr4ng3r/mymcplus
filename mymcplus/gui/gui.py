@@ -382,12 +382,8 @@ class GuiFrame(wx.Frame):
             try:
                 f = open(fn, "wb")
                 try:
-                    if fn.endswith(".max"):
-                        from ..save import format_max_drive
-                        format_max_drive.save(sf, f)
-                    else:
-                        from ..save import format_ems
-                        format_ems.save(sf, f)
+                    format = ps2save.format_for_filename(fn)
+                    format.save(sf, f)
                 finally:
                     f.close()
             except EnvironmentError as value:
