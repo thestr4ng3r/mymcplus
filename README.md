@@ -1,6 +1,8 @@
 
 # mymc+
 
+[![Build Status](https://travis-ci.org/thestr4ng3r/mymcplus.svg?branch=master)](https://travis-ci.org/thestr4ng3r/mymcplus)
+
 mymc+ is a PlayStation 2 memory card manager for to be used with
 .ps2 images as created by the PCSX2 emulator for example.
 
