@@ -59,7 +59,7 @@ setup(
         "Topic :: Utilities"
     ],
     keywords="playstation ps2 mymc memory card save emulator",
-    packages=["mymcplus", "mymcplus.gui"],
+    packages=["mymcplus", "mymcplus.gui", "mymcplus.save"],
     entry_points={
         "console_scripts": [
             "mymcplus = mymcplus.mymc:main"
