@@ -207,8 +207,8 @@ class GuiFrame(wx.Frame):
             # self.info3 = wx.StaticText(panel, -1, "")
 
             info_sizer = wx.BoxSizer(wx.VERTICAL)
-            info_sizer.Add(self.info1, 0, wx.EXPAND)
-            info_sizer.Add(self.info2, 0, wx.EXPAND)
+            info_sizer.Add(self.info1, 0, wx.EXPAND | wx.LEFT | wx.RIGHT, border=4)
+            info_sizer.Add(self.info2, 0, wx.EXPAND | wx.LEFT | wx.RIGHT, border=4)
             # info_sizer.Add(self.info3, 0, wx.EXPAND)
             info_sizer.AddSpacer(5)
             info_sizer.Add(icon_win, 1, wx.EXPAND)

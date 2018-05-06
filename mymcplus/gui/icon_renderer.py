@@ -439,7 +439,7 @@ class IconRenderer:
 
             modelview_matrix = Matrix4x4.look_at(*self.calculate_camera())
             aspect = 1.0
-            if size.Height > 0:
+            if size.Height > 0 and size.Width > 0:
                 aspect = float(size.Width) / float(size.Height)
             projection_matrix = Matrix4x4.perspective(80.0, aspect, 0.1, 500.0)
             glUniformMatrix4fv(self._mvp_matrix_uni, 1, GL_FALSE, (projection_matrix * modelview_matrix).ctypes_array)
