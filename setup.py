@@ -17,15 +17,55 @@
 
 from setuptools import setup
 
+long_description = \
+"""mymc+ is a PlayStation 2 memory card manager for to be used with .ps2 images as created by the PCSX2 emulator for example.
+It is based on the classic mymc utility created by Ross Ridge."""
+
 setup(
     name="mymcplus",
-    version="3.0",
+    version="3.0.0",
+    description="A PlayStation 2 memory card manager",
+    long_description=long_description,
+    long_description_content_type="text/plain",
+    url="https://github.com/thestr4ng3r/mymcplus",
+    author="Florian Märkl",
+    license="GPLv3",
+    clasifiers=[
+        "Development Status :: 5 - Production/Stable",
+        "Environment :: Console",
+        "Environment :: MacOS X :: Cocoa",
+        "Environment :: Win32 (MS Windows)",
+        "Environment :: X11 Applications :: GTK",
+        "Intended Audience :: End Users/Desktop",
+        "License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)",
+        "Natural Language :: English",
+        "Operating System :: Microsoft :: Windows",
+        "Operating System :: MacOS",
+        "Operating System :: POSIX :: Linux",
+        "Programming Language :: Python",
+        "Programming Language :: Python :: 3 :: Only",
+        "Programming Language :: Python :: 3",
+        "Programming Language :: Python :: 3.4",
+        "Programming Language :: Python :: 3.5",
+        "Programming Language :: Python :: 3.6",
+        "Programming Language :: Python :: 3.7",
+        "Topic :: Games/Entertainment",
+        "Topic :: Multimedia :: Graphics :: 3D Rendering",
+        "Topic :: Scientific/Engineering :: Interface Engine/Protocol Translator",
+        "Topic :: System :: Emulators",
+        "Topic :: System :: Archiving",
+        "Topic :: System :: Archiving :: Backup",
+        "Topic :: System :: Filesystems",
+        "Topic :: Utilities"
+    ],
+    keywords="playstation ps2 mymc memory card save emulator",
     packages=["mymcplus", "mymcplus.gui"],
     entry_points={
         "console_scripts": [
             "mymcplus = mymcplus.mymc:main"
         ]
     },
+    python_requires=">=3.4",
     install_requires=[
         "wxPython" # TODO: make optional
     ]
