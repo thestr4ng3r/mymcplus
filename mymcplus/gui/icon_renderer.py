@@ -178,6 +178,7 @@ class IconRenderer:
         self._icon_sys = None
         self._default_lighting_config = self.LightingConfig()
         self.lighting_config = None
+        self._icon_uploaded = False
 
         self.camera_rotation = (0.0, 0.0)
         self.camera_distance = 5.0
@@ -207,7 +208,7 @@ class IconRenderer:
         self._gl_initialized = False
 
 
-    def initialize_gl(self):
+    def _initialize_gl(self):
         self._gl_initialized = True
 
         shader_vert = glCreateShader(GL_VERTEX_SHADER)
@@ -397,14 +398,59 @@ class IconRenderer:
         glBufferData(GL_ARRAY_BUFFER, self._icon.vertex_count * 3 * 2, vertex_data, GL_DYNAMIC_DRAW)
 
 
+    def _upload_icon(self):
+        if self._icon is None or self._icon_uploaded:
+            return
+
+        glBindBuffer(GL_ARRAY_BUFFER, self._vertex_vbo)
+        glBufferData(GL_ARRAY_BUFFER,
+                     self._icon.vertex_count * 3 * 2,
+                     c_void_p(0),
+                     GL_DYNAMIC_DRAW)
+
+        self._vertex_data = (GLshort * (self._icon.vertex_count * 3))()
+
+        glBindBuffer(GL_ARRAY_BUFFER, self._normal_uv_vbo)
+        glBufferData(GL_ARRAY_BUFFER,
+                     self._icon.vertex_count * 5 * 2,
+                     self._icon.normal_uv_data,
+                     GL_STATIC_DRAW)
+
+        glBindBuffer(GL_ARRAY_BUFFER, self._color_vbo)
+        glBufferData(GL_ARRAY_BUFFER,
+                     self._icon.vertex_count * 4,
+                     self._icon.color_data,
+                     GL_STATIC_DRAW)
+
+        glBindTexture(GL_TEXTURE_2D, self._texture)
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB5_A1, ps2icon.TEXTURE_WIDTH, ps2icon.TEXTURE_HEIGHT, 0, GL_RGBA, GL_UNSIGNED_SHORT_1_5_5_5_REV, self._icon.texture)
+        glGenerateMipmap(GL_TEXTURE_2D)
+
+        bg_colors = self._icon_sys.bg_colors
+        bg_alpha = self._icon_sys.background_transparency
+        colors = [int((c / 0x80) * 255) for c in [
+            *bg_colors[0][0:3], bg_alpha,
+            *bg_colors[2][0:3], bg_alpha,
+            *bg_colors[1][0:3], bg_alpha,
+            *bg_colors[3][0:3], bg_alpha]]
+
+        color_data = (GLubyte * (4*4))(*colors)
+        glBindBuffer(GL_ARRAY_BUFFER, self._background_color_vbo)
+        glBufferData(GL_ARRAY_BUFFER, 4*4, color_data, GL_DYNAMIC_DRAW)
+
+        self._icon_uploaded = True
+
+
     def paint(self, canvas, animation_time):
         self.context.SetCurrent(canvas)
 
         if not self._gl_initialized:
-            self.initialize_gl()
+            self._initialize_gl()
 
         if self.failed:
             return
+
+        self._upload_icon()
 
         size = canvas.Size
 
@@ -480,41 +526,4 @@ class IconRenderer:
 
         self._default_lighting_config = self.LightingConfig(icon_sys=icon_sys)
 
-        if icon is None:
-            return
-
-        glBindBuffer(GL_ARRAY_BUFFER, self._vertex_vbo)
-        glBufferData(GL_ARRAY_BUFFER,
-                     self._icon.vertex_count * 3 * 2,
-                     c_void_p(0),
-                     GL_DYNAMIC_DRAW)
-
-        self._vertex_data = (GLshort * (self._icon.vertex_count * 3))()
-
-        glBindBuffer(GL_ARRAY_BUFFER, self._normal_uv_vbo)
-        glBufferData(GL_ARRAY_BUFFER,
-                     self._icon.vertex_count * 5 * 2,
-                     self._icon.normal_uv_data,
-                     GL_STATIC_DRAW)
-
-        glBindBuffer(GL_ARRAY_BUFFER, self._color_vbo)
-        glBufferData(GL_ARRAY_BUFFER,
-                     self._icon.vertex_count * 4,
-                     self._icon.color_data,
-                     GL_STATIC_DRAW)
-
-        glBindTexture(GL_TEXTURE_2D, self._texture)
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB5_A1, ps2icon.TEXTURE_WIDTH, ps2icon.TEXTURE_HEIGHT, 0, GL_RGBA, GL_UNSIGNED_SHORT_1_5_5_5_REV, self._icon.texture)
-        glGenerateMipmap(GL_TEXTURE_2D)
-
-        bg_colors = self._icon_sys.bg_colors
-        bg_alpha = self._icon_sys.background_transparency
-        colors = [int((c / 0x80) * 255) for c in [
-            *bg_colors[0][0:3], bg_alpha,
-            *bg_colors[2][0:3], bg_alpha,
-            *bg_colors[1][0:3], bg_alpha,
-            *bg_colors[3][0:3], bg_alpha]]
-
-        color_data = (GLubyte * (4*4))(*colors)
-        glBindBuffer(GL_ARRAY_BUFFER, self._background_color_vbo)
-        glBufferData(GL_ARRAY_BUFFER, 4*4, color_data, GL_DYNAMIC_DRAW)
+        self._icon_uploaded = False
