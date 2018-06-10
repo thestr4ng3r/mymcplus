@@ -34,11 +34,11 @@ mymc+ is available on [PyPI](https://pypi.org/project/mymcplus/).
 You can install it, including the GUI, using pip:
 
 ```
-pip install mymcplus[GUI]
+pip install mymcplus[gui]
 ```
 
-If you only wish to install the command line interface, simple omit the
-GUI extra:
+If you only wish to install the command line interface, simply omit the
+gui extra:
 
 ```
 pip install mymcplus

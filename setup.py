@@ -68,6 +68,6 @@ setup(
     python_requires=">=3.4",
     install_requires=[],
     extras_require={
-        "GUI": ["wxPython", "pyopengl"]
+        "gui": ["wxPython", "pyopengl"]
     }
 )
