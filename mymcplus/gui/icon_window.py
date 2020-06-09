@@ -114,15 +114,29 @@ class IconWindow(wx.Window):
         super().__init__(parent)
         self.failed = False
 
-        attrib_list = [
-            glcanvas.WX_GL_MAJOR_VERSION, 3,
-            glcanvas.WX_GL_MINOR_VERSION, 2,
-            glcanvas.WX_GL_CORE_PROFILE,
-            glcanvas.WX_GL_RGBA,
-            glcanvas.WX_GL_DOUBLEBUFFER,
-            glcanvas.WX_GL_DEPTH_SIZE, 24,
-            glcanvas.WX_GL_SAMPLES, 16
-        ]
+        def make_attrib_list(samples):
+            return [
+                glcanvas.WX_GL_MAJOR_VERSION, 3,
+                glcanvas.WX_GL_MINOR_VERSION, 2,
+                glcanvas.WX_GL_CORE_PROFILE,
+                glcanvas.WX_GL_RGBA,
+                glcanvas.WX_GL_DOUBLEBUFFER,
+                glcanvas.WX_GL_DEPTH_SIZE, 24,
+                glcanvas.WX_GL_SAMPLES, samples
+            ]
+
+        attrib_list = None
+        samples = 16
+        while samples >= 1:
+            al = make_attrib_list(samples)
+            if glcanvas.GLCanvas.IsDisplaySupported(al):
+                attrib_list = al
+                break
+            samples = samples // 2
+        if attrib_list is None:
+            print("Failed to initialize OpenGL. 3D Icon Display will not be available.")
+            self.failed = True
+            return
 
         self.sizer = wx.BoxSizer(wx.VERTICAL)
 
@@ -170,6 +184,9 @@ class IconWindow(wx.Window):
 
 
     def paint(self, _):
+        if self.failed:
+            return
+
         anim_time = None
 
         if self._animate_icon:

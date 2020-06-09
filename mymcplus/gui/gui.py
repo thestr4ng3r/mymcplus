@@ -187,7 +187,6 @@ class GuiFrame(wx.Frame):
         if icon_win.failed:
             info_win.Destroy()
             info_win = None
-            icon_win.Destroy()
             icon_win = None
         self.info_win = info_win
         self.icon_win = icon_win
