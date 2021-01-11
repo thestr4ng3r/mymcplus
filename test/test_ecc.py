@@ -51,7 +51,7 @@ def test_ecc_check_ok():
     res = ps2mc_ecc.ecc_check(s, ecc)
 
     assert res == ps2mc_ecc.ECC_CHECK_OK
-    assert s.tostring() == bytes(_data)
+    assert s.tobytes() == bytes(_data)
     assert ecc == _ecc
 
 
@@ -65,7 +65,7 @@ def test_ecc_check_correct_data():
     res = ps2mc_ecc.ecc_check(s, ecc)
 
     assert res == ps2mc_ecc.ECC_CHECK_CORRECTED
-    assert s.tostring() == bytes(_data)
+    assert s.tobytes() == bytes(_data)
     assert ecc == _ecc
 
 
@@ -79,7 +79,7 @@ def test_ecc_check_correct_ecc():
     res = ps2mc_ecc.ecc_check(s, ecc)
 
     assert res == ps2mc_ecc.ECC_CHECK_CORRECTED
-    assert s.tostring() == bytes(_data)
+    assert s.tobytes() == bytes(_data)
     assert ecc == _ecc
 
 
