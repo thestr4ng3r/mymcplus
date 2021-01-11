@@ -98,7 +98,7 @@ def bit_array_to_string(a):
     remainder = len(a) % 8
     if remainder != 0:
         a.fromlist([0] * (8 - remainder))
-    s = a.tostring()
+    s = a.tobytes()
     s = binascii.unhexlify(s.translate(_tr_rev_2))
     s = binascii.unhexlify(s.translate(_tr_rev_4))
     return binascii.unhexlify(s.translate(_tr_rev_16))
@@ -632,7 +632,7 @@ class lzari_codec(object):
         self.in_iter = None
         if progress:
             sys.stderr.write("%s100%%\n" % progress)
-        return out.tostring()
+        return out.tobytes()
 
 if mymcsup == None:
     def decode(src, out_length, progress = None):

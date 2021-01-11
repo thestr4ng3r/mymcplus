@@ -69,7 +69,7 @@ def _ecc_calculate(s):
 
     if not isinstance(s, array.array):
         a = array.array('B')
-        a.fromstring(s)
+        a.frombytes(s)
         s = a
     column_parity = 0x77
     line_parity_0 = 0x7F
@@ -95,7 +95,7 @@ def _ecc_check(s, ecc):
         return ECC_CHECK_OK
 
     #print
-    #_print_bin(0, s.tostring())
+    #_print_bin(0, s.tobytes())
     #print "computed %02x %02x %02x" % tuple(computed)
     #print "actual %02x %02x %02x" % tuple(ecc)
 
@@ -148,7 +148,7 @@ def ecc_check_page(page, spare):
     chunks = []
     for i in range(div_round_up(len(page), 128)):
         a = array.array('B')
-        a.fromstring(page[i * 128 : i * 128 + 128])
+        a.frombytes(page[i * 128 : i * 128 + 128])
         chunks.append((a, list(spare[i * 3 : i * 3 + 3])))
 
     r = [ecc_check(s, ecc)
@@ -156,7 +156,7 @@ def ecc_check_page(page, spare):
     ret = ECC_CHECK_OK
     if ECC_CHECK_CORRECTED in r:
         # rebuild sector and spare from the corrected versions
-        page = b"".join([a[0].tostring() for a in chunks])
+        page = b"".join([a[0].tobytes() for a in chunks])
         spare = bytes([a[1][i]
                        for a in chunks
                        for i in range(3)])

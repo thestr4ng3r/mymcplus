@@ -94,17 +94,17 @@ if sys.byteorder == "big":
     def pack_32bit_array(a):
         a = a[:]
         a.byteswap()
-        return a.tostring()
+        return a.tobytes()
 else:
     def unpack_32bit_array(s):
         #if isinstance(s, str):
         #    a = array.array('L')
-        #    a.fromstring(s)
+        #    a.frombytes(s)
         #    return a
         return array.array('I', s)
 
     def pack_32bit_array(a):
-        return a.tostring()
+        return a.tobytes()
     
 def unpack_superblock(s):
     sb = struct.unpack("<28s12sHHHHLLLLLL8x128s128sbbxx", s)
